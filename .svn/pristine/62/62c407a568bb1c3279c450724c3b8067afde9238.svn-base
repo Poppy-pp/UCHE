@@ -1,0 +1,691 @@
+<!-- 用户管理 -->
+<template>
+    <section>
+        <!--工具条-->
+        <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+            <el-form :inline="true" :model="filters">
+                <el-form-item>
+                    <el-input size="small" v-model="filters.name" @keyup.native.13="handleQuery" placeholder="用户名"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <Button type="primary" @click="handleQuery" icon="ios-search">查询</Button>
+                </el-form-item>
+            </el-form>
+        </el-col>
+        <!--列表-->
+        <el-table :max-height="windowOutHeight-200" border :data="listData" highlight-current-row v-loading="listLoading" @selection-change="selsChange" style="width: 100%;">
+            <el-table-column type="index" label="#" width="40" align="center">
+            </el-table-column>
+            <el-table-column type="selection" width="40" align="center">
+            </el-table-column>
+            <el-table-column prop="name" label="用户名" width="110" align="center">
+            </el-table-column>
+            <el-table-column prop="mobile" label="电话" width="110" align="center">
+            </el-table-column>
+            <el-table-column prop="password" label="密码"  align="center">
+            </el-table-column>
+            <el-table-column prop="usertype" label="用户类型" align="center" 
+                :filters="[{ text: '员工', value: 'R' }, { text: '企业', value: 'C' }, { text: '个人', value: '' }]"
+                :filter-method="filterTag"
+                filter-placement="bottom-end">
+                <template slot-scope="scope">
+                    <el-tag
+                      size="small"
+                      :type="scope.row.usertype === 'R' ? 'primary' : scope.row.usertype === 'C' ? 'success' : 'warning'"
+                      close-transition >{{scope.row.usertype == 'R' ? '员工' : scope.row.usertype == 'C' ? '企业' : '个人'}}</el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column prop="firstlogintime" label="首次登录" :formatter="dateFormatter" align="center">
+            </el-table-column>
+            <el-table-column prop="lastlogintime" label="最近登录" :formatter="dateFormatterSecond" align="center">
+            </el-table-column>
+            <el-table-column prop="logincount" label="登录次数"  align="center">
+            </el-table-column>
+            <el-table-column prop="isenable" label="是否有效" :formatter="formatIsactive" align="center">
+            </el-table-column>
+            <el-table-column fixed="right" label="操作" align="center" width="120">
+                <template scope="scope">
+                    <Button type="primary" shape="circle" size="small" @click="handleEdit(scope.$index, scope.row)" title="编辑用户"><Icon type="edit"></Icon></Button>
+                    <Button type="primary" shape="circle" size="small" @click="roleEdit(scope.$index, scope.row)" title="编辑角色权限"><Icon type="ios-people"></Icon></Button>
+                    <Button type="error" shape="circle" size="small" @click="handleDel(scope.$index, scope.row)" title="删除"><Icon type="trash-a"></Icon></Button>
+                   
+                    <!-- <Button id="button" @click="corpEdit(scope.$index, scope.row)" title="编辑组织权限" :disabled="scope.row.isenable == '0' ? true : false">
+                        <i :class="scope.row.isenable == '0' ? 'iconfont icon-gongsi operate operate-bianji-coc disabled' : 'iconfont icon-gongsi operate operate-bianji-coc'"></i>
+                    </Button> -->
+                </template>
+            </el-table-column>
+        </el-table>
+
+        <!--工具条-->
+        <el-pagination
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                 :page-sizes="[15, 50, 80, 99]"
+                :page-size="pageSize"
+                 layout="total, sizes, prev, pager, next, jumper"
+                :total="total" style="text-align: right;margin-top: 5px;">
+        </el-pagination>
+
+        <!--编辑界面-->
+        <Modal title="编辑" :modal-append-to-body="false" v-model="editFormVisible" :close-on-click-modal="false">
+            <el-form :model="editForm" :rules="editFormRules" ref="editForm">
+                <el-form-item label="" prop="name" ref="name">
+                    <el-input size="small" v-model="editForm.name" auto-complete="off" @blur="checkout('name',editForm.name,0)">
+                        <template slot="prepend">用户名</template>
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="" prop="mobile" ref="mobile">
+                    <el-input size="small" v-model="editForm.mobile" auto-complete="off">
+                        <template slot="prepend">电话</template>
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="" prop="password">
+                    <el-input size="small" v-model="editForm.password" auto-complete="off">
+                        <template slot="prepend">密码</template>
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="用户类型" prop="usertype">
+                    <el-radio-group size="small" v-model="editForm.usertype">
+                        <el-radio-button label="R">员工</el-radio-button>
+                        <el-radio-button label="C" disabled>企业</el-radio-button>
+                        <el-radio-button label="">个人</el-radio-button>
+                    </el-radio-group>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <Button @click.native="editFormVisible = false">取消</Button>
+                <Button type="primary" @click.native="editSubmit" :loading="editLoading">提交</Button>
+            </div>
+        </Modal>
+
+        <!--角色编辑界面-->
+        <Modal title="编辑角色" :modal-append-to-body="false" v-model="editRoleInfoVisible" :close-on-click-modal="false" @close="roleEditClose">
+            <el-checkbox :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">全选</el-checkbox>
+            <div style="margin: 15px 0;"></div>
+            <el-checkbox-group v-model="checkedCities" class="userchedaa" @change="handleCheckedCitiesChange">
+                    <el-checkbox v-for="city in cities" :label="city.id" :key="city.id">{{ city.rolename }}</el-checkbox>
+            </el-checkbox-group>
+            <div slot="footer" class="dialog-footer">
+                <Button @click.native="editRoleInfoVisible = false">取消</Button>
+                <Button type="primary" @click.native="handleNodeClick" :loading="nodeLoading">提交</Button>
+            </div>
+        </Modal>
+
+
+        <!--组织权限编辑界面-->
+        <!-- <Modal title="编辑当前用户可操作的组织" :modal-append-to-body="false" v-model="editCorpInfoVisible" :close-on-click-modal="false" @close="corpEditClose">
+             <el-tabs v-model="activeName" type="card" @tab-click="tabClick">
+                <el-tab-pane label="VAS-平台管理系统" name="first">
+                    <el-input style="margin-bottom:10px" placeholder="输入关键字查找组织" v-model="filterTextVas"></el-input>
+                <el-tree
+                  :data="corpRoleList"
+                  show-checkbox
+                  highlight-current
+                  node-key="id"
+                  check-strictly
+                  :default-expanded-keys="defaultExpandedKeys"
+                  :default-checked-keys="defaultCheckedKeys"
+                  ref="treeRouseVas"
+                  :empty-text="emptyText"
+                  :render-content="renderContentVas"
+                  @check-change="handleCheckChangeVas"
+                  :props="defaultProps"
+                  :filter-node-method="filterNodeCorp">
+                </el-tree>
+                </el-tab-pane>
+                <el-tab-pane label="GIS-车辆位置服务系统" name="second" :disabled="treeLoading">
+                    <el-input style="margin-bottom:10px" placeholder="输入关键字查找组织" v-model="filterTextGis"></el-input>
+                    <el-tree
+                      :data="gisCorpRoleList"
+                      show-checkbox
+                      highlight-current
+                      node-key="id"
+                      check-strictly
+                      :default-expanded-keys="gisDefaultExpandedKeys"
+                      :default-checked-keys="gisDefaultCheckedKeys"
+                      ref="treeRouse"
+                      :empty-text="emptyText"
+                      :render-content="renderContent"
+                      @check-change="handleCheckChange"
+                      :props="defaultProps"
+                      :filter-node-method="filterNodeCorp">
+                    </el-tree>
+                </el-tab-pane>
+              </el-tabs>
+              <div slot="footer" class="dialog-footer">
+                <el-button @click.native="editCorpInfoVisible = false">取消</el-button>
+                <el-button type="primary" @click.native="handleCorpClick" :loading="corpLoading">提交</el-button>
+             </div>
+        </Modal> -->
+    </section>
+</template>
+<style type="text/css">
+    .disabled{color:#D7D9E2;}
+    .userchedaa .el-checkbox{
+        margin-right: 15px;
+        margin-bottom: 15px;
+        margin-left: 0;
+    }
+</style>
+<script>
+    import util from '../../../styles/js/util'
+    // import {getSysUserInfoList, addSysUserInfo ,modifySysUserInfo,removeSysUserInfo,getSysRoleInfoList,editUserRole,getUserRole,getUserList,getRuleResourceInfo,getCorpAllList,editCorpRole,getThisCorpList,getCheckoutOfUser,getSelectListVeh,getHaveVehList,modifyHaveVehList,getGroupAllList,getGroupThisList,editGroupRole} from '../../../api/api';
+    import {getUserList,modifyUser,removeUser,getRoleList} from '../../../api/api';
+    export default {
+        props:['windowOutHeight'],
+        data() {
+            return {
+                filters: {
+                    domSearch:[{ select:['vin','name','model','licenseplatenum'],content:'' }],//车辆查询框
+                },
+                filterTextVas:'',
+                activeName:'first',
+                tabName:'',//存储点击的tab名
+                listData: [],
+                customers:[],
+                total: 0,
+                pageSize:15,
+                curResourceId:'',
+                currentPage: 1,
+                listLoading: false,
+                sels: [],//列表选中列
+                checkoutDataT:true,//数据验证返回的布尔值true
+                checkoutDataF:[],//
+                treeLoading:false,
+                thisInput:[],//编辑时存入row验证的值
+                editFormVisible: false,//编辑界面是否显示
+                editLoading: false,
+                editRoleInfoVisible:false,
+                editFormRules: {
+                },
+                checkAll: true,
+                nodeLoading:false,
+                checkedCities: [],
+                cities: [],
+                curUserId:'',
+                isIndeterminate: true,
+
+                // corpLoading:false,
+                // editCorpInfoVisible:false,//组织权限页面
+                // emptyText:"加载中...",
+                // corpRoleList:[],//选择的组织组
+                // gisCorpRoleList:[],
+                // tempCorpRoleList:[],
+                // defaultProps: {
+                //   label: 'corpname',
+                //   children: 'corporateinfos'
+                // },
+                // isPewe:true,
+                // defaultCheckedKeys:[],//默认勾选的节点的 key 的数组
+                // defaultExpandedKeys:[],//默认展开的节点的 key 的数组
+                // gisDefaultExpandedKeys:[],
+                // gisDefaultCheckedKeys:[],
+                // userId:'',//当前点击的用户id
+                
+                //编辑界面数据
+                editForm: {
+                    id:'',
+                    name:'',
+                    password:'',
+                    usertype:'',
+                    firstlogintime:'',
+                    lastlogintime:'',
+                    logincount:'',
+                },
+            }
+        },
+        watch: {
+              filterTextVas(val) {
+                this.$refs.treeRouseVas.filter(val);
+              },
+        },
+        methods: {
+            // 筛选过滤——组织
+            filterNodeCorp(value, data) {
+                    if (!value) return true;
+                    return data.corpname.indexOf(value) !== -1;
+            },
+            // 数据重复验证
+            checkout:function(p,v,index){
+                if(v=="") return ;
+                if (this.thisInput == v) return;//编辑时 没改输入框值
+                this.checkoutDataT = true;//初始化
+                      let paras={
+                                para:p,
+                                value:v,
+                      }
+                    getCheckoutOfUser(paras).then((res) => {
+                    let errorInput = res.data.data.param;//保存验证失败的字段
+                    if(!res.data.data.result){
+                        this.$message ({
+                            message : '信息输入重复！',
+                            type: 'warning'
+                        });
+                        this.$refs[errorInput].$el.className="el-form-item is-error";//输入框标红
+                        this.checkoutDataF[index]=false
+                    }else{
+                        this.$refs[errorInput].$el.className="el-form-item";//输入框恢复
+                        this.checkoutDataF[index]=true
+                    }
+                });
+            },
+
+
+            //组织权限编辑显示
+            // corpEdit : function(index,row){
+            //     this.userId = row.id;//获取用户id
+            //     this.editCorpInfoVisible = true;
+            //     this.vehStatus = [];//初始化组织车辆状态
+            //     // 查当前用户 有无选择组织权限
+            //     let para = {
+            //         userid:row.id,
+            //         system:'A',
+            //         showCount:1000
+            //     };
+            //     this.emptyText = "加载中 ~ 喝杯咖啡耐心等候 ~" ;
+            //     this.treeLoading = true;
+            //     getThisCorpList(para).then((res) => {
+            //         let dk = [],ek = [],tempdata = [];
+            //         res.data.data.forEach((obj,index) => {//遍历当前用户已选组织
+            //             if (obj.corporateid >= 0) {//第一级不再遍历选中
+            //                 tempdata.push(obj.corporateid);//筛选出子集——公司
+            //                 // this.vehStatus.push({corpid:obj.corporateid,vehiclescope:obj.vehiclescope,usercorpid:obj.ID});//筛选出子集——公司、状态、组织用户关联id
+            //             }
+            //         });
+            //         tempdata.forEach( function(item) {//重新遍历删除后的数组
+            //             dk.push(item);
+            //             ek.push(item);
+            //         });
+            //         this.defaultCheckedKeys = dk;//选中当前树
+            //         this.defaultExpandedKeys = ek;//展开
+            //         if(this.corpRoleList.length > 0) return;
+            //         //初始化所有父节点树
+            //         getCorpAllList().then((res) => {
+            //             this.corpRoleList = res.data.data;
+            //             this.treeLoading = false;
+            //             this.emptyText = "完成";
+            //         });
+            //     });
+            // },
+            // renderContentVas(h, { node, data, store }){
+            //     // return (<span><span>{ data.corpname }</span></span>);
+            // },
+            // // 循环corpid对应匹配vehiclescope
+            // getCorpvehStatus:function(corpid){
+            //     for(var i = 0, len = this.vehStatus.length; i < len; i++){
+            //         if(corpid == this.vehStatus[i].corpid){//当传入的corpid==得到的corpid
+            //             return this.vehStatus[i].vehiclescope;//返回状态
+            //         }
+            //     }
+            // },
+            // renderContent(h, { node, data, store }) {
+            //     // let status,str;
+            //     // if (data.parentcorpcode != '0') {//当不为第一级【类别】的时候
+            //     //     status = this.getCorpvehStatus(data.id);
+            //     //     str = (<span>
+            //     //                 <span><span>{ data.corpname }</span></span>
+            //     //                 { (status == 'SUB')
+            //     //                     ? (<Button style="margin-left:10px;display: inline-block;padding: 0 5px;height: 24px;line-height: 22px;font-size: 12px;opacity:0.8;" id={'tag'+data.id} type="warning" on-click={(e)=>{this.vehEdit(data);e.stopPropagation();}}>部分</Button>) 
+            //     //                     : (<Button style="margin-left:10px;display: inline-block;padding: 0 5px;height: 24px;line-height: 22px;font-size: 12px;opacity:0.8;" id={'tag'+data.id} type="success" on-click={(e)=>{this.vehEdit(data);e.stopPropagation();}}>全部</Button>)
+            //     //                 }
+            //     //                       </span>);
+            //     //             return str;
+            //     // }else{//当为第一级的时候
+            //     //     return (<span><span>{ data.corpname }</span></span>);
+            //     // }
+            //     },
+            //     //树的选中操作——GIS
+            //     handleCheckChange(data, checked, indeterminate) {
+            //             var arr = this.$refs.treeRouse.getCheckedKeys(),//目前被选中的节点所组成的数组
+            //             kesarry = this.$refs.treeRouse.getCheckedNodes(),//目前被选中的节点所组成的数组
+            //             isClearFl = false;
+            //             /*如果子菜单有选中不能取消当前选择 start*/
+            //             if(!checked && data.parentcorpcode != 0){
+            //                 kesarry.forEach((res,index)=>{
+            //                     if(res.id == data.parentcorpcode){
+            //                         res.corporateinfos.forEach((res,index)=>{
+            //                             if($.inArray(parseInt(res.id), arr) >= 0) {
+            //                                 isClearFl = true;
+            //                                 return false;
+            //                             }
+            //                         });
+            //                         if(!isClearFl){
+            //                             this.$refs.treeRouse.setChecked(data.parentcorpcode,false,false);//通过 key/data设置某个节点的勾选状态
+            //                             return false;
+            //                         }
+            //                     }
+            //                 });
+            //             }
+            //             /*选中子类的时候选中 至少一个父类*/
+            //      /*     if($.inArray(parseInt(data.parentcorpcode), arr) < 0 && checked && data.parentcorpcode != 0) {
+            //                 this.$refs.treeRouse.setChecked(data.parentcorpcode,true,false);
+            //         选中父类时候选中所有子类
+            //                 if(data.corporateinfos.length > 0 && this.isPewe) {
+            //                     this.$refs.treeRouse.setChecked(data.id,true,true);
+            //                 };
+            //                 this.isPewe = false;
+            //                 return;
+            //             };*/
+
+            //             /*选中父类时候选中给所有子类*/
+            //             if(data.parentcorpcode == 0 && checked && this.isPewe) {
+            //                 this.$refs.treeRouse.setChecked(data.id,true,true);
+            //                 return;
+            //             };
+            //             /*取消选中父类时候取消给所有子类*/
+            //             if(data.parentcorpcode == 0 && !checked && this.isPewe) {
+            //                 this.$refs.treeRouse.setChecked(data.id,false,true);
+            //                 return;
+            //             };
+            //             /*二级——选中父类时候选中所有子类*/
+            //             if(data.parentcorpcode != 0 && data.corporateinfos.length > 0 && checked && this.isPewe) {
+            //                 this.$refs.treeRouse.setChecked(data.id,true,true);
+            //                 return;
+            //             };
+            //             /*二级——取消选中父类时候取消所有子类*/
+            //             if(data.parentcorpcode != 0 && data.corporateinfos.length > 0 && !checked && this.isPewe) {
+            //                 this.$refs.treeRouse.setChecked(data.id,false,true);
+            //                 return;
+            //             };
+            //             this.isPewe = true;
+            // },
+            // // 组织权限关闭时
+            // corpEditClose:function(){
+            //     this.corpRoleList = [];
+            //     this.gisCorpRoleList = [];
+            //     this.activeName = 'first';
+            //     this.filterTextVas = '';//过滤清空
+            //     this.filterTextGis = '';//过滤清空
+            // },
+            // // tab
+            // tabClick(tab, event) {
+            //     this.tabName = tab.name;//将点击的tab存入
+            //     if(tab.name == 'second'){
+            //         // 查当前用户 有无选择组织权限
+            //         let para = {
+            //             userid:this.userId,
+            //             system:'E',
+            //             showCount:1000
+            //         };
+            //         getThisCorpList(para).then((res) => {
+            //             let dk = [],ek = [],tempdata = [];
+            //             res.data.data.forEach((obj,index) => {//遍历当前用户已选组织
+            //                 if (obj.corporateid >= 0) {//第一级不再遍历选中
+            //                     tempdata.push(obj.corporateid);//筛选出子集——公司
+            //                     this.vehStatus.push({corpid:obj.corporateid,vehiclescope:obj.vehiclescope,usercorpid:obj.ID});//筛选出子集——公司、状态、组织用户关联id
+            //                 }
+            //             });
+            //             tempdata.forEach( function(item) {//重新遍历删除后的数组
+            //                 dk.push(item);
+            //                 ek.push(item);
+            //             });
+            //             this.$refs.treeRouse.setCheckedKeys(dk,true);
+            //             // this.gisDefaultCheckedKeys = dk;//选中当前树
+            //             this.gisDefaultExpandedKeys = ek;//展开
+            //             this.gisCorpRoleList = this.corpRoleList;
+            //         });
+            //         }
+            //     },
+            //     //树的选中操作——VAS
+            //     handleCheckChangeVas(data, checked, indeterminate) {
+            //             var arr = this.$refs.treeRouseVas.getCheckedKeys(),//目前被选中的节点所组成的数组
+            //             kesarry = this.$refs.treeRouseVas.getCheckedNodes(),//目前被选中的节点所组成的数组
+            //             isClearFl = false;
+            //             /*如果子菜单有选中不能取消当前选择 start*/
+            //             if(!checked && data.parentcorpcode != 0){
+            //                 kesarry.forEach((res,index)=>{
+            //                     if(res.id == data.parentcorpcode){
+            //                         res.corporateinfos.forEach((res,index)=>{
+            //                             if($.inArray(parseInt(res.id), arr) >= 0) {
+            //                                 isClearFl = true;
+            //                                 return false;
+            //                             }
+            //                         });
+            //                         if(!isClearFl){
+            //                             this.$refs.treeRouseVas.setChecked(data.parentcorpcode,false,false);//通过 key/data设置某个节点的勾选状态
+            //                             return false;
+            //                         }
+            //                     }
+            //                 });
+            //             }
+            //             /*选中子类的时候选中 至少一个父类*/
+            //      /*     if($.inArray(parseInt(data.parentcorpcode), arr) < 0 && checked && data.parentcorpcode != 0) {
+            //                 this.$refs.treeRouseVas.setChecked(data.parentcorpcode,true,false);
+            //         选中父类时候选中所有子类
+            //                 if(data.corporateinfos.length > 0 && this.isPewe) {
+            //                     this.$refs.treeRouseVas.setChecked(data.id,true,true);
+            //                 };
+            //                 this.isPewe = false;
+            //                 return;
+            //             };*/
+
+            //             /*选中父类时候选中给所有子类*/
+            //             if(data.parentcorpcode == 0 && checked && this.isPewe) {
+            //                 this.$refs.treeRouseVas.setChecked(data.id,true,true);
+            //                 return;
+            //             };
+            //             /*取消选中父类时候取消给所有子类*/
+            //             if(data.parentcorpcode == 0 && !checked && this.isPewe) {
+            //                 this.$refs.treeRouseVas.setChecked(data.id,false,true);
+            //                 return;
+            //             };
+            //             /*二级——选中父类时候选中所有子类*/
+            //             if(data.parentcorpcode != 0 && data.corporateinfos.length > 0 && checked && this.isPewe) {
+            //                 this.$refs.treeRouseVas.setChecked(data.id,true,true);
+            //                 return;
+            //             };
+            //             /*二级——取消选中父类时候取消所有子类*/
+            //             if(data.parentcorpcode != 0 && data.corporateinfos.length > 0 && !checked && this.isPewe) {
+            //                 this.$refs.treeRouseVas.setChecked(data.id,false,true);
+            //                 return;
+            //             };
+            //             this.isPewe = true;
+            // },
+            // //  点击提交时
+            // handleCorpClick(){
+            //     this.corpLoading = true;
+            //     if (this.tabName == 'second') {// 如果是gis权限
+            //         var treeNode = this.$refs.treeRouse.getCheckedNodes();//目前被选中的节点所组成的数组
+            //     }else{// 如果是vas权限
+            //         var treeNode = this.$refs.treeRouseVas.getCheckedNodes();//目前被选中的节点所组成的数组
+            //     }
+            //             let para = [],_this = this;
+
+            //             if (treeNode.length == 0) {//当没选组织时
+            //                 para.push({userid:_this.userId,system :(_this.activeName == 'first')?'A':'E'});
+            //             }else{
+            //                 treeNode.forEach(function(item,index){
+            //                     var obj = {};
+            //                     obj.userid = _this.userId;//当前用户id
+            //                     obj.system = (_this.activeName == 'first')?'A':'E';//当前用户id
+            //                     obj.corporateid = item.id;//第一级id
+            //                     para.push(obj);
+            //                     /*2c*/
+            //                     if(item.corporateinfos.length > 0){
+            //                         item.corporateinfos.forEach(function(item1,index){
+            //                             var obj = {};
+            //                             obj.userid = _this.userId;
+            //                             obj.corporateid = item1.id;//子级id
+            //                             para.push(obj);
+            //                         });
+            //                     }
+            //                 });
+            //             }
+            
+            //             editCorpRole(para).then((res) => {
+            //             var data = res.data.data;
+            //             if(res.data.result.code == 4001){
+            //                 this.$message({
+            //                           message: res.result.desc,
+            //                           type: 'error'
+            //                 });
+            //             }else {
+            //                 this.$message({
+            //                           message: '编辑组织成功！',
+            //                           type: 'success'
+            //                 });
+            //                     this.corpLoading = false;
+            //                     this.editCorpInfoVisible = false;
+            //             }
+            //         });
+            //         },
+
+
+            // 编辑角色
+            roleEditClose:function(){
+                this.checkedCities = [];
+            },
+            handleCheckAllChange(event) {
+                let arry = [];
+                this.cities.forEach(function(obj){
+                    arry.push(obj.id);
+                });
+                    this.checkedCities = event.target.checked ? arry : [];
+                    this.isIndeterminate = false;
+                },
+                handleCheckedCitiesChange(value) {
+                    let checkedCount = value.length;
+                    this.checkAll = checkedCount === this.cities.length;
+                    this.isIndeterminate = checkedCount > 0 && checkedCount < this.cities.length;
+                },
+                // 角色提交时
+                handleNodeClick:function(){
+                    this.nodeLoading = true;
+                        let checkedNode = this.checkedCities,
+                        para = [],_this = this;
+                        checkedNode.forEach(function(val){
+                            var obj = {};
+                            obj.userid = _this.curUserId;
+                            obj.roleid = val;
+                            para.push(obj);
+                        });
+                        editUserRole(para).then((res) => {
+                        var data = res.data.data;
+                        this.$message({
+                          message: '编辑成功！',
+                          type: 'success'
+                        });
+                        this.nodeLoading = false;
+                        this.editRoleInfoVisible = false;
+                    });
+                },
+
+            //有效转换器
+            formatIsactive: function (row, column) {
+                return row.isenable == 'Y' ? '有效' : row.isenable == 'N' ? '无效' : '未知';
+            },
+            //时间转换1
+            dateFormatter: function(row,col){
+                if (row.firstlogintime == "" || row.firstlogintime == undefined)  return;
+                return util.formatDate.format(new Date(row.firstlogintime), 'yyyy-MM-dd');
+            },
+            //时间转换2
+            dateFormatterSecond: function(row,col){
+                if (row.lastlogintime == "" || row.lastlogintime == undefined)  return;
+                return util.formatDate.format(new Date(row.lastlogintime), 'yyyy-MM-dd');
+            },
+            //切换当前页
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.handleQuery();
+            },
+            //切换每页显示数量
+            handleSizeChange(val) {
+                this.pageSize = val;
+                this.handleQuery();
+            },
+            //获取保单列表
+            handleQuery() {
+                let para = {
+                    currentPage : this.currentPage,
+                    showCount   : this.pageSize,
+                    name:this.filters.name,
+                };
+                this.listLoading = true;
+                getUserList(para).then((res) => {
+                    this.total = res.data.data.totalResult;
+                    this.listData = res.data.data.records;
+                    this.listLoading = false;
+                });
+            },
+            //角色编辑显示
+            roleEdit : function(index,row){
+                this.editRoleInfoVisible = true;
+                this.curUserId = row.id;
+                //初始化角色
+                getRoleList().then((res) => {
+                    this.cities = res.data.data.records;
+                    let para = {
+                        userid:this.curUserId
+                    };
+                    getUserRole(para).then((res) => {
+                        let carry = [];
+                        res.data.data.records.forEach(function(obj){
+                            carry.push(obj.roleid);
+                        });
+                        this.checkedCities = carry;
+                    });
+                });
+            },
+            // 用户类型过滤搜索
+            filterTag(value, row) {
+                return row.usertype === value;
+            },
+            //删除
+            handleDel: function (index, row) {
+                this.$confirm('确认删除该记录吗?', '提示', {
+                    type: 'warning'
+                }).then(() => {
+                    this.listLoading = true;
+                    let para = { 
+                        id: row.id
+                    };
+
+                    removeUser(para).then((res) => {
+                        this.listLoading = false;
+                        this.$message ({
+                            message : '删除成功',
+                            type: 'success'
+                        });
+                        this.handleQuery();
+                    });
+                }).catch(() => {
+
+                });
+            },
+            //显示编辑界面
+            handleEdit: function (index, row) {
+                $(".is-error").removeClass('is-error');//清空验证时的红框
+                this.editFormVisible = true;
+                this.editForm = row;
+                // this.editForm.usertype = (!row.usertype || row.usertype == 'R') ? 'C' : 'R';
+                this.thisInput = this.editForm.name;//将当前验证的字段 已获得的值存入
+            },
+            //编辑
+            editSubmit: function () {
+                this.$refs.editForm.validate((valid) => {
+                    if (valid) {
+                        this.editLoading = true;
+                        let para = Object.assign({}, this.editForm);
+                        modifyUser(para).then((res) => {
+                            this.editLoading = false;
+                            this.$message ({
+                                message : '修改成功',
+                                type: 'success'
+                            });
+                            this.$refs['editForm'].resetFields();
+                            this.editFormVisible = false;
+                            this.handleQuery();
+                        });
+                    }
+                });
+            },
+            selsChange: function (sels) {
+                this.sels = sels;
+            },
+        },
+        mounted() {
+            this.handleQuery();
+        },
+    }
+</script>

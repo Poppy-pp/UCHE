@@ -1,0 +1,106 @@
+.user-infor{
+    height: 120px;
+}
+.avator-img{
+    display: block;
+    width: 80%;
+    max-width: 100px;
+    height: auto;
+}
+.card-user-infor-name{
+    font-size: 2em;
+    color: #2d8cf0;
+}
+.card-title{
+    color: #abafbd;
+}
+.made-child-con-middle{
+    height: 100%;
+}
+.to-do-list-con{
+    height: 160px;
+    overflow: auto;
+}
+// 页面滚动条 start
+// 滚动条整体部分
+.to-do-list-con::-webkit-scrollbar,.ivu-table-body::-webkit-scrollbar,.single-page-con::-webkit-scrollbar{
+    width: 3px;
+    height: 3px !important;
+}
+//滚动条里面可以拖动的那部分
+.to-do-list-con::-webkit-scrollbar-thumb,.ivu-table-body::-webkit-scrollbar-thumb,.single-page-con::-webkit-scrollbar-thumb{//滚动条内部
+    background-color: rgb(255, 255, 255);
+    background-image: -webkit-gradient(linear, 20% 0%, 70% 80%, from(rgb(45, 140, 240)), color-stop(0.7, rgb(229, 242, 239)), to(rgb(45, 140, 240)));
+    border-radius: 10px;
+}
+//外层轨道
+.to-do-list-con::-webkit-scrollbar-track,.ivu-table-body::-webkit-scrollbar-track,.single-page-con::-webkit-scrollbar-track{//滚动条外部
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);  
+    border-radius: 10px;  
+    background-color: #F5F5F5;  //背景-白底
+}
+// 兼容浏览器
+.to-do-list-con::-moz-scrollbar,.ivu-table-body::-moz-scrollbar,.single-page-con::-moz-scrollbar{
+    width: 3px;
+    height: 3px !important;
+}
+.to-do-list-con::-moz-scrollbar-thumb,.ivu-table-body::-moz-scrollbar-thumb,.single-page-con::-moz-scrollbar-thumb{//滚动条内部
+    background-color: rgb(255, 255, 255);
+    background-image: -moz-gradient(linear, 20% 0%, 70% 80%, from(rgb(45, 140, 240)), color-stop(0.7, rgb(229, 242, 239)), to(rgb(45, 140, 240)));
+    border-radius: 10px;
+}
+.to-do-list-con::-moz-scrollbar-track,.ivu-table-body::-moz-scrollbar-track,.single-page-con::-moz-scrollbar-track{//滚动条外部
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);  
+    border-radius: 10px;  
+    background-color: #F5F5F5;  //背景-白底
+}
+// 页面滚动条 end
+.to-do-item{
+    padding: 2px;
+}
+.infor-card-con{
+    height: 100px;
+}
+.infor-card-icon-con{
+    height: 100%;
+    color: white;
+    border-radius: 3px 0 0 3px;
+}
+.map-con{
+    height: 305px;
+}
+.map-incon{
+    height: 100%;
+}
+.data-source-row{
+    height: 200px;
+}
+.line-chart-con{
+    height: 150px;
+}
+.addmessage {
+    width: 0;
+    height: 0;
+    border-top: 50px solid #2D8CF0;
+    border-left: 50px solid transparent;
+    position: absolute;
+    top: 0%;
+    right: 0%;
+}
+.data-source-row .showline{
+    padding: 5px 0;
+}
+.data-source-row .showline{
+  cursor: pointer;
+}
+.data-source-row .showline:hover{
+  color:#2D8CF0;
+}
+.data-source-row .showline .autow{
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.data-source-row .showline .fixedw{
+  text-align: right;
+}

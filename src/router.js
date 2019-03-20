@@ -1,0 +1,340 @@
+import Main from './views/Main.vue';
+
+// 不作为Main组件的子页面展示的页面——单独写
+export const loginRouter = {
+    path: '/login',
+    name: 'login',
+    meta: {
+        title: 'Login - 登录'//页面浏览器title
+    },
+    component: resolve => { require(['./views/login.vue'], resolve); }
+};
+
+export const page404 = {
+    path: '/404',
+    name: 'error_404',
+    meta: {
+        title: '404-页面不存在'//页面浏览器title
+    },
+    component: resolve => { require(['./views/error_page/404.vue'], resolve); }
+};
+
+export const page401 = {
+    path: '/401',
+    meta: {
+        title: '401-权限不足'//页面浏览器title
+    },
+    name: 'error_401',
+    component: resolve => { require(['./views/error_page/401.vue'], resolve); }
+};
+
+export const page500 = {
+    path: '/500',
+    meta: {
+        title: '500-服务端错误'//页面浏览器title
+    },
+    name: 'error_500',
+    component: resolve => { require(['./views/error_page/500.vue'], resolve); }
+};
+
+
+export const locking = {
+    path: '/locking',
+    meta: {
+        title: 'Lock - 锁定'//页面浏览器title
+    },
+    name: 'locking',
+    component: resolve => { require(['./views/main_components/locking-page.vue'], resolve); }
+};
+
+
+// 作为Main组件的子页面展示——不在左侧菜单显示的路由——写在otherRouter里
+export const otherRouter = {
+    path: '/',
+    name: 'otherRouter',
+    component: Main,
+    children: [
+        { path: 'home', title: '首页',meta:{title: '首页'}, name: 'home_index', component: resolve => { require(['./views/home/home.vue'], resolve); } },
+        { path: 'ownspace', title: '个人中心',meta:{title: '个人中心'}, name: 'ownspace_index', component: resolve => { require(['./views/own-space/own-space.vue'], resolve); } },
+        { path: 'message', title: '消息中心',meta:{title: '消息中心'}, name: 'message_index', component: resolve => { require(['./views/message/message.vue'], resolve); } },
+        { path: 'addNewAssociate',title: '添加关联', meta:{title: '添加关联'}, name: 'addNewAssociate', component: resolve => { require(['./views/my_components/associatedVehicle/addNewAssociate.vue'], resolve); } },
+        { path: 'assVehicleDetails',title: '关联车辆详情', meta:{title: '关联车辆详情'}, name: 'assVehicleDetails', component: resolve => { require(['./views/my_components/associatedVehicle/assVehicleDetails.vue'], resolve); } },
+        { path: 'orderDetails',title: '销售订单详情', meta:{title: '销售订单详情'}, name: 'orderDetails', component: resolve => { require(['./views/my_components/salesOrder/orderDetails.vue'], resolve); } },
+        
+    ]
+};
+
+
+// 作为Main组件的子页面展示——在左侧菜单显示的路由——写在appRouter里
+export const appRouter = [
+    { 
+        path: '/customerManage', 
+        component:Main,
+        name: 'customerManage',
+        title: '客户管理',
+        icon: 'person',//图标样式class
+        children: [
+            { path: 'index',title: '客户管理', meta:{title: '客户管理'}, name: 'customerManage_index', component: resolve => { require(['./views/my_components/customerManage/customerManage.vue'], resolve); } }
+        ]
+    },
+    { 
+        path: '/salesOrder', 
+        component:Main,
+        name: 'salesOrder',
+        title: '销售订单',
+        icon: 'ios-paper-outline',//图标样式class
+        children: [
+            {
+                    path: '/allOrder',
+                    icon: 'social-octocat',
+                    name: 'allOrder',
+                    meta:{
+                        title: '全部订单'//页面浏览器title
+                    },
+                    title: '全部订单',//标签页title
+                    component: resolve => { require(['./views/my_components/salesOrder/allOrder.vue'], resolve); }
+            },
+            {
+                    path: '/myOrder',
+                    icon: 'social-whatsapp',
+                    name: 'myOrder',
+                    meta:{
+                        title: '我的订单'//页面浏览器title
+                    },
+                    title: '我的订单',//标签页title
+                    component: resolve => { require(['./views/my_components/salesOrder/myOrder.vue'], resolve); }
+            },
+            {
+                    path: '/handoverReceptionOrder',
+                    icon: 'log-out',
+                    name: 'handoverReceptionOrder',
+                    meta:{
+                        title: '移交/接收'//页面浏览器title
+                    },
+                    title: '移交/接收',//标签页title
+                    component: resolve => { require(['./views/my_components/salesOrder/handoverReceptionOrder.vue'], resolve); }
+            },
+        ]
+    },
+    { 
+        path: '/associatedVehicle', 
+        component:Main,
+        name: 'associatedVehicle',
+        title: '关联车辆',
+        icon: 'network',//图标样式class
+        children: [
+            { path: 'index',title: '关联车辆', meta:{title: '关联车辆'}, name: 'associatedVehicle_index', component: resolve => { require(['./views/my_components/associatedVehicle/associatedVehicle.vue'], resolve); } },
+            ]
+    },
+    { 
+        path: '/appointmentManage', 
+        component:Main,
+        name: 'order',
+        title: '预约功能',
+        icon: 'android-hand',//图标样式class
+        children: [
+            {
+                    path: '/addAppointment',
+                    icon: 'android-call',
+                    name: 'addAppointment',
+                    meta:{
+                        title: '添加预约'//页面浏览器title
+                    },
+                    title: '添加预约',//标签页title
+                    component: resolve => { require(['./views/my_components/appointmentManage/addAppointment.vue'], resolve); }
+            },
+            {
+                    path: '/appointmentList',
+                    icon: 'speakerphone ',
+                    name: 'appointmentList',
+                    meta:{
+                        title: '预约管理'//页面浏览器title
+                    },
+                    title: '预约管理',//标签页title
+                    component: resolve => { require(['./views/my_components/appointmentManage/appointmentList.vue'], resolve); }
+            },
+            ]
+    },
+    { 
+        path: '/farmManage', 
+        component:Main,
+        name: 'farm',
+        title: '车间管理',
+        icon: 'help-buoy',//图标样式class
+        children: [
+            {
+                    path: '/setFarm',
+                    icon: 'alert-circled',
+                    name: 'setFarm',
+                    meta:{
+                        title: '车间设置'//页面浏览器title
+                    },
+                    title: '车间设置',//标签页title
+                    component: resolve => { require(['./views/my_components/farmManage/setFarm.vue'], resolve); }
+            },
+            {
+                    path: '/setStation',
+                    icon: 'tshirt',
+                    name: 'setStation',
+                    meta:{
+                        title: '工位设置'//页面浏览器title
+                    },
+                    title: '工位设置',//标签页title
+                    component: resolve => { require(['./views/my_components/farmManage/setStation.vue'], resolve); }
+            },
+            {
+                    path: '/setTeamwork',
+                    icon: 'wrench ',
+                    name: 'setTeamwork',
+                    meta:{
+                        title: '班组设置'//页面浏览器title
+                    },
+                    title: '班组设置',//标签页title
+                    component: resolve => { require(['./views/my_components/farmManage/setTeamwork.vue'], resolve); }
+            },
+            {
+                    path: '/setProject',
+                    icon: 'compass',
+                    name: 'setProject',
+                    meta:{
+                        title: '项目设置'//页面浏览器title
+                    },
+                    title: '项目设置',//标签页title
+                    component: resolve => { require(['./views/my_components/farmManage/setProject.vue'], resolve); }
+            },
+            ]
+    },
+    { 
+        path: '/afterService', 
+        component:Main,
+        name: 'afterService',
+        title: '售后服务',
+        icon: 'ribbon-b',//图标样式class
+        children: [
+            { path: 'index',title: '售后服务', meta:{title: '售后服务'}, name: 'afterService_index', component: resolve => { require(['./views/my_components/afterService/afterService.vue'], resolve); } }
+        ]
+    },
+    { 
+        path: '/vehicleManage', 
+        component:Main,
+        name: 'vehicleManage',
+        title: '车辆管理',
+        icon: 'android-car',//图标样式class
+        children: [
+            { path: 'index',title: '车辆管理', meta:{title: '车辆管理'}, name: 'vehicleManage_index', component: resolve => { require(['./views/my_components/vehicleManage/vehicleManage.vue'], resolve); } }
+        ]
+    },
+    { 
+        path: '/storageManage', 
+        component:Main,
+        name: 'storageManage',
+        title: '库存管理',
+        icon: 'ios-cloud',//图标样式class
+        children: [
+            { path: 'index',title: '库存管理', meta:{title: '库存管理'}, name: 'storageManage_index', component: resolve => { require(['./views/my_components/storageManage/storageManage.vue'], resolve); } }
+        ]
+    },
+    { 
+        path: '/staffManage', 
+        component:Main,
+        name: 'staffManage',
+        title: '员工考勤',
+        icon: 'ios-people',//图标样式class
+        children: [
+            { path: 'index',title: '员工考勤', meta:{title: '员工考勤'}, name: 'staffManage_index', component: resolve => { require(['./views/my_components/staffManage/staffManage.vue'], resolve); } }
+        ]
+    },
+    { 
+        path: '/permissionsManage', 
+        component:Main,
+        name: 'permissionsManage',
+        title: '权限设置',
+        icon: 'android-unlock',//图标样式class
+        children: [
+            { path: 'index',title: '权限设置', meta:{title: '权限设置'}, name: 'permissionsManage_index', component: resolve => { require(['./views/my_components/permissionsManage/permissionsManage.vue'], resolve); } }
+        ]
+    },
+    { 
+        path: '/operationNote', 
+        component:Main,
+        name: 'operationNote',
+        title: '操作记录',
+        icon: 'android-sync',//图标样式class
+        children: [
+            { path: 'index',title: '操作记录', meta:{title: '操作记录'}, name: 'operationNote_index', component: resolve => { require(['./views/my_components/operationNote/operationNote.vue'], resolve); } }
+        ]
+    },
+    { 
+        path: '/statisticsReport', 
+        component:Main,
+        name: 'statisticsReport',
+        title: '数据统计报表',
+        icon: 'stats-bars',//图标样式class
+        children: [
+            { path: 'index',title: '数据统计报表', meta:{title: '数据统计报表'}, name: 'statisticsReport_index', component: resolve => { require(['./views/my_components/statisticsReport/statisticsReport.vue'], resolve); } }
+        ]
+    },
+    { 
+        path: '/systemManage', 
+        component:Main,
+        name: 'systemManage',
+        title: '系统管理',
+        icon: 'cube',//图标样式class
+        children:[
+                {
+                    path: '/userManage',
+                    icon: 'happy-outline',
+                    name: 'userManage',
+                    meta:{
+                        title: '用户管理'//页面浏览器title
+                    },
+                    title: '用户管理',//标签页title
+                    component: resolve => { require(['./views/my_components/systemManage/userManage.vue'], resolve); }
+                },
+                 {
+                    path: '/roleManage',
+                    icon: 'android-unlock',
+                    name: 'roleManage',
+                    meta:{
+                        title: '角色权限',//页面浏览器title
+                    },
+                    title: '角色权限',//标签页title
+                    component: resolve => { require(['./views/my_components/systemManage/roleManage.vue'], resolve); }
+                },
+                {
+                    path: '/menuManage',
+                    icon: 'grid',
+                    name: 'menuManage',
+                    meta:{
+                        title: '资源管理',//页面浏览器title
+                    },
+                    title: '资源管理',//标签页title
+                    component: resolve => { require(['./views/my_components/systemManage/menuManage.vue'], resolve); }
+                },
+                {
+                    path: '/dictionaryManage',
+                    icon: 'ios-list',
+                    name: 'dictionaryManage',
+                    meta:{
+                        title: '字典管理',//页面浏览器title
+                    },
+                    title: '字典管理',//标签页title
+                    component: resolve => { require(['./views/my_components/systemManage/dictionaryManage.vue'], resolve); }
+                },
+            ]
+    },
+    
+];
+
+
+
+// 所有上面定义的路由都要写在下面的routers里
+export const routers = [
+    loginRouter,//登陆
+    otherRouter,//页面不显示
+    locking,//锁屏
+    ...appRouter,//导航树
+    page500,//服务端错误
+    page401,//权限不足
+    page404//页面找不到
+];

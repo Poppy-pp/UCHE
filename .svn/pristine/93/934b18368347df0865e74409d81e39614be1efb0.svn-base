@@ -1,0 +1,449 @@
+<!--* 
+* @description: 关联车辆
+* @author: pl 
+* @update: pl (2017-12-04 10:55) 
+*-->
+<template>
+	<section>
+        <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+            <el-form :inline="true" :model="filters">
+                <el-form-item>
+                    <Input v-model="filters.searchKey" @keyup.enter.native="handleQuery" placeholder="请输入查询内容">
+                    	<Button slot="append" @click="handleQuery" icon="ios-search"></Button>
+                    </Input>
+                </el-form-item>
+                <el-form-item>
+                	<Button type="primary" @click="handleNew" icon="plus-round">新增关联</Button>
+                </el-form-item>
+                <el-form-item>
+                	<Button type="primary" @click="resetForm" icon="loop">重置</Button>
+                </el-form-item>
+                <el-form-item style="float:right;marginRight:0;">
+                    <Dropdown trigger="custom" :visible="selectColVisible" @on-click="handleSelectCols" class="selectcol">
+                        <a href="javascript:void(0)" @click="handleDropdownOpen">
+                            <Button type="primary">自定义列
+                                <Icon type="arrow-down-b"></Icon>
+                            </Button>
+                        </a>
+                        <DropdownMenu slot="list">
+                            <DropdownItem name="name"><Checkbox v-model="checked.name"/>车主</DropdownItem>
+                            <DropdownItem name="mobile"><Checkbox v-model="checked.mobile"/>车主手机</DropdownItem>
+                            <DropdownItem name="landv"><Checkbox v-model="checked.landv"/>车牌号/车架号</DropdownItem>
+                            <DropdownItem name="platform"><Checkbox v-model="checked.platform"/>平台来源</DropdownItem>
+                            <DropdownItem name="associate"><Checkbox v-model="checked.associate"/>关联人信息</DropdownItem>
+                            <Button size="small" long type="primary" @click="handleDropdownClose">关闭</Button>
+                        </DropdownMenu>
+                    </Dropdown>
+                </el-form-item>
+            </el-form>
+        </el-col>
+        <!--列表-->
+        <el-table :max-height="windowOutHeight-260" border :data="listData" highlight-current-row v-loading="listLoading" element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading">
+            <el-table-column type="index" label="" width="40" align="center">
+            </el-table-column>
+            <el-table-column prop="name" label="车主" align="center" v-if="isarray('name',curTableData)">
+            </el-table-column>
+            <el-table-column prop="mobile" label="车主手机" align="center" v-if="isarray('mobile',curTableData)">
+            </el-table-column>
+            <el-table-column prop="landv" label="车牌号/车架号" align="center" v-if="isarray('landv',curTableData)">
+            </el-table-column>
+            <el-table-column prop="platform" label="平台来源" :formatter="platformFormatter" align="center" v-if="isarray('landv',curTableData)">
+            </el-table-column>
+            <el-table-column prop="associate" label="关联人信息"  align="center" v-if="isarray('associate',curTableData)">
+                <template slot-scope="scope">
+                  <el-popover trigger="hover" width="600">
+                    <el-table border :data="scope.row.users">
+                        <el-table-column type="index" width="40" align="center"></el-table-column>
+                        <el-table-column prop="rename" label="关联人昵称" align="center"></el-table-column>
+                        <el-table-column prop="remobile" label="关联人手机" align="center"></el-table-column>
+                        <el-table-column prop="relationship" label="关系" :formatter="relationshipFormatter" align="center"></el-table-column>
+                        <el-table-column prop="category" label="来源" :formatter="categoryFormatter" align="center"></el-table-column>
+                    </el-table>
+                    <div slot="reference" class="name-wrapper" >
+                      <el-tag><Icon type="android-people"></Icon>&emsp;{{scope.row.users == null ? '暂无关联人' : scope.row.users.length + ' 位'}}</el-tag>
+                    </div>
+                  </el-popover>
+                </template>
+            </el-table-column>
+            <el-table-column fixed="right" label="操作" align="center" width="120">
+                <template slot-scope="scope">
+                    <Button disabled type="primary" shape="circle" size="small" @click="handleDetails(scope.$index, scope.row)" title="关联详情">
+                        <Icon type="eye"></Icon>
+                    </Button>
+                    <Button type="primary" shape="circle" size="small" @click="handleEdit(scope.$index, scope.row)" title="编辑关联" :disabled="scope.row.isdelete == '1' ? true : false">
+                        <Icon type="edit"></Icon>
+                    </Button>
+                    <Button type="primary" shape="circle" size="small" @click="handleChange(scope.$index, scope.row)" :title='scope.row.isdelete == "1" ? "设置为有效" : "设置为无效"'>
+                        <Icon type="trash-a"></Icon>
+                    </Button>
+                </template>
+            </el-table-column>
+        </el-table>
+
+        <!--工具条-->
+        <el-pagination
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                 :page-sizes="[15, 50, 80, 99]"
+                :page-size="pageSize"
+                 layout="total, sizes, prev, pager, next, jumper"
+                :total="total" style="text-align: right;margin-top: 5px;">
+        </el-pagination>
+
+        <!--编辑界面-->
+        <el-dialog title="编辑关联信息" :modal-append-to-body="false" :visible.sync="editFormVisible" :close-on-click-modal="false">
+            <el-form :model="editForm" :rules="editFormRules" ref="editForm">
+                <el-collapse v-model="activeNames">
+                    <el-collapse-item title="车主信息" name="1">
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="name">
+                                    <el-input v-model="editForm.name" auto-complete="off" readonly>
+                                        <template slot="prepend">车主姓名</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="" prop="mobile">
+                                    <el-input v-model="editForm.mobile" auto-complete="off" readonly>
+                                        <template slot="prepend">车主联系方式</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="24">
+                                <el-form-item label="" prop="landv">
+                                    <el-input v-model="editForm.landv" auto-complete="off" readonly>
+                                        <template slot="prepend">车牌号/车架号</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                    </el-collapse-item>
+                    <el-collapse-item title="关联信息" name="2" class="asscard">
+                        <el-row :gutter="20">
+                            <el-col :span="6" v-for="(item, index) in reusers" :key="item.vehicleid">
+                              <el-card :body-style="{ padding: '5%' }">
+                                <template v-if="reusers.headiconpath == null || reusers.headiconpath == undefined">
+                                    <img style="width:40px;border-radius:50%;position: relative;top:1%;left: 50%;transform: translateX(-50%);" src="../../../images/pho.png" :title="reusers.rename" />
+                                </template>
+                                <template v-else>
+                                    <img style="width:40px;border-radius:50%;position: relative;left: 50%;transform: translateX(-50%);" :src="'/img/'+ reusers.headiconpath" :title="reusers.rename" /></img>
+                                </template>
+                                <div class="card">
+                                  <span>{{ item.rename }}&emsp;<el-tag size="mini">{{ item.relationship == 0 ? '车主' : item.relationship == 1 ? '夫妻' : item.relationship == 2 ? '亲属' : item.relationship == 3 ? '朋友' : item.relationship == 4 ? '同事' : item.relationship == 5 ? '其他' : '暂无' }}</el-tag></span>
+                                  <p><i class="el-icon-phone"></i>{{ item.remobile }}</p>
+                                  <div class="clearfix">
+                                    <time class="time">{{ fmtdata.formatDate.format(new Date(item.createdate), 'yyyy-MM-dd') }}</time>
+                                    <el-button type="text" class="button" @click="cancelSubmit(item)">取消关联</el-button>
+                                  </div>
+                                </div>
+                              </el-card>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="20">
+                            <div>
+                                    <el-col :span="9">
+                                      <el-form-item label="" prop="remobile">
+                                        <el-input v-model="editForm.remobile" auto-complete="off">
+                                            <template slot="prepend">关联人手机号</template>
+                                        </el-input>
+                                      </el-form-item>
+                                    </el-col>
+                                    <el-col :span="8">
+                                      <el-form-item label="" prop="rename">
+                                        <el-input v-model="editForm.rename" auto-complete="off">
+                                            <template slot="prepend">关联人姓名</template>
+                                        </el-input>
+                                      </el-form-item>
+                                    </el-col>
+                                    <el-col :span="7">
+                                      <el-form-item label="" prop="relationship">
+                                        <el-select v-model="editForm.relationship" filterable  clearable placeholder="请选择关联人与车主关系">
+                                            <el-option
+                                              v-for="item in relOptions"
+                                              :key="item.value"
+                                              :label="item.label"
+                                              :value="item.value">
+                                            </el-option>
+                                        </el-select>
+                                      </el-form-item>
+                                    </el-col>
+                            </div>
+                          </el-row>
+                          <Button @click="closeSubmit"  class="addBtn">取 消</Button>
+                          <Button type="primary" @click="editSubmit" :loading="editLoading" icon="ios-plus-outline" class="addBtn">添 加 关 联</Button>
+                    </el-collapse-item>
+                </el-collapse>
+            </el-form>
+        </el-dialog>
+    </section>
+</template>
+<script>
+    import util from '../../../styles/js/util'
+    import {getAssVeh,addAssVeh,modifyAssVeh,cancelAssVeh,getOwnerAss} from '../../../api/api';
+    export default {
+        props:['windowOutHeight'],
+        data() {
+            // 验证手机
+              var checkMobile = (rule, value, callback) => {
+                var reg = /^1\d{10}$/g,
+                flag = reg.test(value);
+                if(!flag){
+                  return callback(new Error('请输入11位的手机号码'));
+                }else{
+                  callback();
+                }
+              };
+            //验证
+            return {
+                checked:{//自定义下拉框checkbox
+                  name:true,
+                  mobile:true,
+                  landv:true,
+                  platform:true,
+                  associate:true,
+                },
+                curTableData:['name','mobile','landv','platform','associate'],//自定义显示列组
+                selectColVisible:false,//自定义下拉框隐藏
+                fmtdata:util,
+                filters: {
+                    searchKey:'',//查询框
+                },
+                activeNames:['1','2','3'],//折叠面板展开
+                user:'',
+                listData: [],
+                total: 0,
+                pageSize:15,
+                currentPage: 1,
+                listLoading: false,
+                relOptions:[{
+                    value: '0',
+                    label: '车主'
+                  }, {
+                    value: '1',
+                    label: '夫妻'
+                  }, {
+                    value: '2',
+                    label: '亲属'
+                }, {
+                    value: '3',
+                    label: '朋友'
+                }, {
+                    value: '4',
+                    label: '同事'
+                }, {
+                    value: '5',
+                    label: '其他'
+                }],
+                editFormVisible: false,//编辑界面是否显示
+                editLoading: false,
+                editFormRules: {
+                  remobile: [
+                        { required: true, message: '请输入关联人手机号', trigger: 'blur' },
+                        { validator: checkMobile,trigger: 'blur'}
+                  ],
+                  rename: [{ required: true, message: '请输入关联人姓名', trigger: 'blur' }],
+                },
+                //编辑界面数据
+                editForm: {
+                    vehicleid:'',
+                    remobile:'',
+                    rename:'',
+                    relationship:'',
+                },
+                users:[],//关联车辆组
+                reusers:[],//编辑页面实时显示关联信息
+            }
+        },
+        methods: {
+            // 自定义显示列
+            isarray(value,array){//判断是否选择
+              for(let i = 0,len = array.length;i<len;i++){
+                if(array[i] == value) return true;
+              }
+              return false;
+            },
+            handleSelectCols(val){//选择列表时
+                  if(!this.checked[val]){//checkbox未选中，要选择时
+                     this.checked[val] = true;//将checkbox选中
+                     if(!this.isarray(val,this.curTableData))//如果不存在，push
+                        this.curTableData.push(val);
+                  }else{//checkbox已选中，取消选择时
+                    this.checked[val] = false;//将checkbox取消选中
+                    if(this.isarray(val,this.curTableData)){//如果存在，删除
+                      this.curTableData.forEach((item,index)=>{
+                        if(item == val){
+                          this.curTableData.splice(index,1);
+                        }
+                      });
+                    }
+                  }
+            },
+            // 下拉菜单
+            handleDropdownOpen () {
+                this.selectColVisible = true;
+            },
+            handleDropdownClose () {
+                this.selectColVisible = false;
+            },
+            // 来源转换
+            categoryFormatter: function (row, column) {
+                return row.category == 'SHARE' ? '分享' : row.category == 'SYSTEM' ? '系统' : '暂无';
+            },
+             // 关系转换
+            relationshipFormatter: function (row, column) {
+                return row.relationship == 0 ? '车主' : row.relationship == 1 ? '夫妻' : row.relationship == 2 ? '亲属' : row.relationship == 3 ? '朋友' : row.relationship == 4 ? '同事' : row.relationship == 5 ? '其他' : '暂无'
+            },
+            // 平台来源转换
+            platformFormatter: function (row, column) {
+                return row.platform == 'C' ? '优车' : row.platform == 'V' ? 'VAS' : '暂无'
+            },
+            //切换当前页
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.handleQuery();
+            },
+            //切换每页显示数量
+            handleSizeChange(val) {
+                this.pageSize = val;
+                this.handleQuery();
+            },
+            //获取保单列表
+            handleQuery() {
+                let para = {
+                    currentPage : this.currentPage,
+                    showCount   : this.pageSize,
+                    searchKey:this.filters.searchKey,
+                };
+                this.listLoading = true;
+                getAssVeh(para).then((res) => {
+                    this.total = res.data.data.totalResult;
+                    this.listData = res.data.data.records;
+                    this.listLoading = false;
+                });
+            },
+            // 有效按钮切换状态
+            handleChange: function(index,row){
+                this.$confirm('确认设置该条记录的状态吗？', '提示', {
+                    type: 'warning'
+                }).then(() => {
+                    let para = { 
+                        id: row.vehicleid,
+                        isdelete:row.isdelete == 0 ? 1 : 0,
+                    }
+                    cancelAssVeh(para).then((res) => {
+                        if (res.data.result.code == 0) {
+                            this.$message ({
+                                message : '设置成功',
+                                center: true,
+                                type: 'success'
+                            });
+                            row.isdelete = para.isdelete;
+                            this.handleQuery();
+                        }
+                    }).catch(() => {
+                        this.listLoading = false;
+                    });
+                });
+            },
+
+            //显示编辑界面
+            handleEdit: function (index, row) {
+                this.editFormVisible = true;
+                this.editForm = row;
+                this.reinfoQuery();//刷新关联列表
+            },
+            //编辑页面——实时获取关联组信息
+            reinfoQuery:function(){
+              let para = {
+                vehicleid:this.editForm.vehicleid
+              }
+              getOwnerAss(para).then((res) => {
+                    this.reusers = res.data.data.users;
+              });
+            },
+            //编辑
+            editSubmit: function () {
+                this.$refs.editForm.validate((valid) => {
+                    if (valid) {
+                        this.editLoading = true;
+                        this.users.push({mobile:this.editForm.remobile,tempname:this.editForm.rename,relationship:this.editForm.relationship});//添加关联人
+                        let para = {
+                          vehicleid:this.editForm.vehicleid,
+                          users:this.users,
+                          platform:this.editForm.platform
+                        }
+                        addAssVeh(para).then((res) => {
+                            if (res.data.result.code == 0) {
+                                this.editLoading = false;
+                                this.$message ({
+                                    message : '编辑成功',
+                                    center: true,
+                                    type: 'success'
+                                });
+                                this.$refs['editForm'].resetFields();
+                                this.reinfoQuery();//刷新关联列表
+                            }
+                        });
+                    }else{
+                        this.$message ({
+                                message : '标红项有误！',
+                                center: true,
+                                type: 'error'
+                        });
+                    }
+                });
+            },
+            // 编辑窗口关闭
+            closeSubmit: function () {
+                this.handleQuery();//刷新列表
+                this.editFormVisible = false;
+            },
+            // 取消关联
+            cancelSubmit: function (item) {
+              let para = {
+                id:item.id
+              }
+              cancelAssVeh(para).then((res) => {
+                        if (res.data.result.code == 0) {
+                                this.$message ({
+                                    message : '取关成功！',
+                                    center: true,
+                                    type: 'success'
+                                });
+                                this.reinfoQuery();//刷新关联列表
+                        }else{
+                                this.$message ({
+                                    message :res.data.result.desc,
+                                    center: true,
+                                    type: 'error'
+                                });
+                        }
+              });
+            },
+            // 显示新增关联
+            handleNew: function () {//跳转添加关联页面
+              this.$router.push({
+                  name: 'addNewAssociate'
+              });
+            },
+            // 显示详情
+            handleDetails: function (index,row) {//跳转添加关联页面
+              this.$router.push({
+                  name: 'assVehicleDetails',
+                  params: { row }
+              });
+            },
+            //清空查询表单
+	     resetForm() {
+	        this.filters.searchKey = '';
+	     },
+        },
+        mounted() {
+            this.handleQuery();
+
+            // 得到登陆的用户信息
+            this.user = JSON.parse(sessionStorage.getItem('user'));
+        },
+    }
+</script>

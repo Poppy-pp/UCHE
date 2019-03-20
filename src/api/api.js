@@ -1,0 +1,200 @@
+/* 
+* @description: 后台数据接口配置中心 
+* @author: pl
+* @update: pl (2017-10-17 10:55) 
+*/
+import axios from 'axios';
+import Qs from 'qs';
+
+let base = '/vasms-uche';
+
+
+/* -------------------------------------------------------------个人管理部分--------------------------------------------------------*/
+// 获取手机验证码
+export const getNumber = params => {return axios.get(`${base}/getSms`, { params: params } ); };
+// 检查验证码是否正确
+export const checkNumber = params => {return axios.get(`${base}/validate`, { params: params } ); };
+// 修改密码
+export const editPassword = params => {return axios.put(`${base}/resetPwd/`+params.id, params); };
+/* -------------------------------------------------------------个人管理部分结束--------------------------------------------------------*/
+
+
+
+
+/* -------------------------------------------------------------客户管理部分--------------------------------------------------------*/
+// 获取客户——我负责的
+export const getCustomer = params => {return axios.get(`${base}/controller/u1/base/customerInfo/lists`, { params: params } ); };
+export const addCustomer = params => {return axios.post(`${base}/controller/u1/base/customerInfo/add`, params); };
+export const modifyCustomer = params => {return axios.put(`${base}/controller/u1/base/customerInfo/`+params.id,params ); };
+
+// 获取客户——数量
+export const getFavouriteCount = params => {return axios.get(`${base}/controller/u1/base/customerInfo/getFavouriteCount`, { params: params } ); };
+
+/* -------------------------------------------------------------客户管理部分结束--------------------------------------------------------*/
+
+
+
+
+
+/* -------------------------------------------------------------关联车辆部分--------------------------------------------------------*/
+// 获取关联车辆
+export const getAssVeh = params => {return axios.get(`${base}/controller/u1/wechat/userVehicle/getRelationList`, { params: params } ); };
+export const addAssVeh = params => {return axios.post(`${base}/controller/u1/wechat/userVehicle/addRelation`, params); };
+export const cancelAssVeh = params => {return axios.put(`${base}/controller/u1/wechat/userVehicle/cancel/`+params.id,params  ); };
+// 获取当前车主的车辆 关联人组
+export const getOwnerAss = params => {return axios.get(`${base}/controller/u1/wechat/userVehicle/getRelationPeople`,  { params:params} ); };
+// 新增——获取车主手机号，查询车主信息
+export const getOwnerMobile = params => {return axios.get(`${base}/controller/u1/wechat/userVehicle/getCustAndVinPlatfrom`, { params: params } ); };
+// 新增—— 获取车主id，查询车架号车牌号
+export const getOwnerVin = params => {return axios.get(`${base}/controller/u1/wechat/userVehicle/getVinPlatfrom`, { params: params } ); };
+// 获取关联车辆详情
+// export const getAssVeh = params => {return axios.get(`${base}/controller/u1/wechat/userVehicle/getvehicleinformation`, { params: params } ); };
+/* -------------------------------------------------------------关联车辆部分结束--------------------------------------------------------*/
+
+
+
+
+
+
+
+/* -------------------------------------------------------------销售订单部分--------------------------------------------------------*/
+//全部订单
+export const getallOrders = params => {return axios.get(`${base}/controller/u1/wko/newOrder/queryTaskAll`, { params: params } ); };
+export const removeOrders = params => {return axios.post(`${base}/controller/u1/wko/newOrder/deleteProcessInstance`, params   ); };
+
+// 查询各个流程状态数量
+export const getProcessNum = params => {return axios.get(`${base}/controller/u1/wko/newOrder/queryTaskCount2`, { params: params } ); };
+// 移交人列表
+export const getallEmps = params => {return axios.get(`${base}/controller/u1/org/employeeInfoVW/getByCorpEmps`, { params: params } ); };
+// 移交流程
+export const handleOverOrder = params => {return axios.get(`${base}/controller/u1/wko/newOrder/forward`,{ params: params }  ); };
+
+// 查询车型
+export const getModel = params => {return axios.get(`${base}/controller/u1/base/vehicleInfo/getVehicleconfig?model=m`, { params: params } ); };
+// 查询保险项目
+export const getInsTypes = params => {return axios.get(`${base}/controller/u1/base/insuranceInfo`, { params: params } ); };
+// 签合同流程数据来源
+export const getTask = params => {return axios.get(`${base}/controller/u1/wko/newOrder/getTaskInfo`, { params: params } ); };
+// 完成
+export const getTaskHI = params => {return axios.get(`${base}/controller/u1/wko/newOrder/getTaskInfoHI`, { params: params } ); };
+// 取消订单
+export const cancelTask = params => {return axios.get(`${base}/controller/u1/wko/newOrder/cancelOrder`, { params: params }); };
+// 恢复订单
+export const recoverTask = params => {return axios.get(`${base}/controller/u1/wko/newOrder/recoverOrder`, { params: params }); };
+
+// 合同——下一步
+export const nextProcess = params => {return axios.post(`${base}/controller/u1/wko/newOrder/contract/`+params.id_ , params ); };
+// 付款——下一步
+export const nextProcessTwo = params => {return axios.post(`${base}/controller/u1/wko/newOrder/giveCar/`+params.id_ , params ); };
+// 交车——下一步
+export const nextProcessThree = params => {return axios.post(`${base}/controller/u1/wko/newOrder/instur/`+params.id_ , params ); };
+// 保险——下一步
+export const nextProcessFour = params => {return axios.post(`${base}/controller/u1/wko/newOrder/plateNumber/`+params.id_ , params ); };
+// 上牌——下一步
+export const nextProcessFive = params => {return axios.post(`${base}/controller/u1/wko/newOrder/finish/`+params.id_ , params); };
+// 我的订单
+/* -------------------------------------------------------------销售订单部分结束--------------------------------------------------------*/
+
+
+
+
+/* -------------------------------------------------------------预约功能部分--------------------------------------------------------*/
+//预约
+export const getAppointmentList = params => {return axios.get(`${base}/controller/u1/wko/reserve/getAllReserve`, { params: params } ); };
+export const addAppointment = params => {return axios.post(`${base}/controller/u1/wko/reserve/addWeb`, params); };
+export const modifyAppointment = params => {return axios.put(`${base}/controller/u1/wko/reserve/getAllReserve/`+params.id,params ); };
+
+/* -------------------------------------------------------------预约功能部分结束--------------------------------------------------------*/
+
+
+
+
+
+
+/* -------------------------------------------------------------车间管理部分--------------------------------------------------------*/
+// 班组设置
+export const getTeamworkList = params => {return axios.get(`${base}/controller/u1/org/GroupInfo/queryForMap`, { params: params } ); };
+export const getDropDown = params => {return axios.get(`${base}/controller/u1/sys/dictionarydata`, { params: params } ); };
+export const getDeptList = params => {return axios.get(`${base}/controller/u1/org/departmentInfo/getDeptAndEmp`, { params: params } ); };
+export const getEmpList = params => {return axios.get(`${base}/controller/u1/org/employeeInfoVW/getByCorpEmps`, { params: params } ); };
+export const addTeamwork = params => {return axios.post(`${base}/controller/u1/org/GroupInfo/addWorkStation`, params); };
+export const modifyTeamwork = params => {return axios.put(`${base}/controller/u1/org/GroupInfo/updateTo/`+params.id,params ); };
+export const removeTeamwork = params => {return axios.delete(`${base}/controller/u1/org/GroupInfo/delete/`+params.id,params ); };
+
+// 车间设置
+export const getFarmList = params => {return axios.get(`${base}/controller/u1/sys/configWorkShop/getList`, { params: params } ); };
+export const addFarm = params => {return axios.post(`${base}/controller/u1/sys/configWorkShop`, params); };
+export const modifyFarm = params => {return axios.put(`${base}/controller/u1/sys/configWorkShop/updateTo/`+params.id,params ); };
+export const removeFarm = params => {return axios.delete(`${base}/controller/u1/sys/configWorkShop/`+params.id,params ); };
+
+
+
+
+
+
+/* -------------------------------------------------------------车间管理部分结束--------------------------------------------------------*/
+
+
+
+
+
+
+
+
+/* -------------------------------------------------------------系统管理部分--------------------------------------------------------*/
+// 用户管理
+export const getUserList = params => {return axios.get(`${base}/controller/u1/login/userInfo`, { params: params }); };
+export const modifyUser = params => {return axios.put(`${base}/controller/u1/login/userInfo/`+params.id,params ); };
+export const removeUser = params => {return axios.delete(`${base}/controller/u1/login/userInfo/isenable/`+params.id,params ); };
+// 分配角色
+export const getUserRole = params => {return axios.get(`${base}/controllerapi/u1/sys/UserRole`, { params: params }); };
+export const editUserRole = params => {return axios.put(`${base}/controllerapi/u1/sys/UserRole`,  params ); };
+
+
+// 角色管理
+export const getRoleList = params => {return axios.get(`${base}/controllerapi/u1/sys/RoleInfo/querylike`, { params: params }); };
+export const addRole = params => {return axios.post(`${base}/controllerapi/u1/sys/RoleInfo`, params); };
+export const modifyRole = params => {return axios.put(`${base}/controllerapi/u1/sys/RoleInfo/`+params.id,params ); };
+export const removeRole = params => {return axios.delete(`${base}/controllerapi/u1/sys/RoleInfo/`+params.id,params ); };
+// 分配资源
+export const getRoleMenu = params => {return axios.get(`${base}/controllerapi/u1/sys/ResourceRole`, { params: params }); };
+export const editRoleMenu = params => {return axios.post(`${base}/controllerapi/u1/sys/ResourceRole`,  params ); };
+
+
+// 资源管理
+export const getMenuList = params => {return axios.get(`${base}/controllerapi/u1/sys/Resource`, { params: params }); };
+export const addMenu = params => {return axios.post(`${base}/controllerapi/u1/sys/Resource`, params); };
+export const modifyMenu = params => {return axios.put(`${base}/controllerapi/u1/sys/Resource/`+params.id,params ); };
+export const removeMenu = params => {return axios.delete(`${base}/controllerapi/u1/sys/Resource/`+params.id,params ); };
+
+
+//字典管理接口
+export const getSysDictionaryList = params => {return axios.get(`${base}/controller/u1/sys/sysDictionary/querylike`, { params: params }); };
+export const addSysDictionary = params => {return axios.post(`${base}/controller/u1/sys/sysDictionary`, params); };
+export const modifySysDictionary = params => {return axios.put(`${base}/controller/u1/sys/sysDictionary/`+params.id,params ); };
+export const removeSysDictionary = params => {return axios.post(`${base}/controller/u1/sys/sysDictionary/batch`,Qs.stringify(params));};
+
+/* -------------------------------------------------------------系统管理部分结束--------------------------------------------------------*/
+
+
+
+/* -------------------------------------------------------------基础管理部分--------------------------------------------------------*/
+//模糊查询车主相关信息
+export const getEmployeeSearchInfoList = params => {return axios.get(`${base}/api/v1/car/ownerInfo/`, { params: params }); };
+//车主信息管理接口
+export const getOwnerInfoList = params => {return axios.get(`${base}/api/v1/car/ownerInfo/query/vw`, { params: params }); };
+
+export const addOwnerInfo = params => {return axios.post(`${base}/api/v1/car/ownerInfo/`, params ); };
+
+export const modifyOwnerInfo = params => {return axios.put(`${base}/api/v1/car/ownerInfo/`+params.id,params ); };
+
+export const removeOwnerInfo = params => {return axios.post(`${base}/api/v1/car/ownerInfo/batch`,Qs.stringify(params));};
+//查询车架号
+export const getVehicleSearchInfoList = params => {return axios.get(`${base}/api/v1/car/vehicleInfo/`, { params: params }); };
+/*车主搜索模糊查询接口*/
+export const getSelectListOwner = params => {return axios.get(`${base}/api/v1/car/ownerInfo/query/like`, { params: params }); };
+// 绑定车辆信息
+export const getVehInfoList = params => {return axios.get(`${base}/api/v1/car/vehicleInfo/query/like`, { params: params }); };
+// 详情全部信息
+export const getMoreInfoList = params => {return axios.get(`${base}/api/v1/car/vehicleInfo/query/detail`, { params: params }); };
+/* ----------------------------------------------------------基础管理部分结束------------------------------------------------------*/

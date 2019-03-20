@@ -1,0 +1,92 @@
+/* 
+* @description: 后台数据接口配置中心 
+* @author: pl
+* @update: pl (2017-10-17 10:55) 
+*/
+import axios from 'axios';
+import Qs from 'qs';
+
+let base = '/vasms-uche';
+
+
+/* -------------------------------------------------------------个人管理部分--------------------------------------------------------*/
+// 获取手机验证码
+export const getNumber = params => {return axios.get(`${base}/getSms`, { params: params } ); };
+// 检查验证码是否正确
+export const checkNumber = params => {return axios.get(`${base}/validate`, { params: params } ); };
+// 修改密码
+export const editPassword = params => {return axios.put(`${base}/resetPwd/`+params.id, params); };
+/* -------------------------------------------------------------个人管理部分结束--------------------------------------------------------*/
+
+
+
+
+/* -------------------------------------------------------------客户管理部分--------------------------------------------------------*/
+// 获取客户——我负责的
+export const getCustomer = params => {return axios.get(`${base}/controller/u1/base/customerInfo/lists`, { params: params } ); };
+export const addCustomer = params => {return axios.post(`${base}/controller/u1/base/customerInfo`, params); };
+export const modifyCustomer = params => {return axios.put(`${base}/controller/u1/base/customerInfo/`+params.id,params ); };
+
+// 获取客户——我关注的
+export const getCustomerFavourite = params => {return axios.get(`${base}/controller/u1/base/favourite/getFavouriteList`, { params: params } ); };
+
+/* -------------------------------------------------------------客户管理部分结束--------------------------------------------------------*/
+
+
+/* -------------------------------------------------------------系统管理部分--------------------------------------------------------*/
+// 用户管理
+export const getUserList = params => {return axios.get(`${base}/controller/u1/login/userInfo`, { params: params }); };
+export const modifyUser = params => {return axios.put(`${base}/controller/u1/login/userInfo/`+params.id,params ); };
+export const removeUser = params => {return axios.delete(`${base}/controller/u1/login/userInfo/`+params.id,params ); };
+// 分配角色
+export const getUserRole = params => {return axios.get(`${base}/controllerapi/u1/sys/UserRole`, { params: params }); };
+export const editUserRole = params => {return axios.put(`${base}/controllerapi/u1/sys/UserRole`,  params ); };
+
+
+// 角色管理
+export const getRoleList = params => {return axios.get(`${base}/controllerapi/u1/sys/RoleInfo/querylike`, { params: params }); };
+export const addRole = params => {return axios.post(`${base}/controllerapi/u1/sys/RoleInfo`, params); };
+export const modifyRole = params => {return axios.put(`${base}/controllerapi/u1/sys/RoleInfo/`+params.id,params ); };
+export const removeRole = params => {return axios.delete(`${base}/controllerapi/u1/sys/RoleInfo/`+params.id,params ); };
+// 分配资源
+export const getRoleMenu = params => {return axios.get(`${base}/controllerapi/u1/sys/ResourceRole`, { params: params }); };
+export const editRoleMenu = params => {return axios.post(`${base}/controllerapi/u1/sys/ResourceRole`,  params ); };
+
+
+// 资源管理
+export const getMenuList = params => {return axios.get(`${base}/controllerapi/u1/sys/Resource`, { params: params }); };
+export const addMenu = params => {return axios.post(`${base}/controllerapi/u1/sys/Resource`, params); };
+export const modifyMenu = params => {return axios.put(`${base}/controllerapi/u1/sys/Resource/`+params.id,params ); };
+export const removeMenu = params => {return axios.delete(`${base}/controllerapi/u1/sys/Resource/`+params.id,params ); };
+
+
+//字典管理接口
+export const getSysDictionaryList = params => {return axios.get(`/vasms-web/api/v1/sys/sysDictionary/querylike`, { params: params }); };
+export const addSysDictionary = params => {return axios.post(`/vasms-web/api/v1/sys/sysDictionary`, params); };
+export const modifySysDictionary = params => {return axios.put(`/vasms-web/api/v1/sys/sysDictionary/`+params.id,params ); };
+export const removeSysDictionary = params => {return axios.post(`/vasms-web/api/v1/sys/sysDictionary/batch`,Qs.stringify(params));};
+
+/* -------------------------------------------------------------系统管理部分结束--------------------------------------------------------*/
+
+
+
+/* -------------------------------------------------------------基础管理部分--------------------------------------------------------*/
+//模糊查询车主相关信息
+export const getEmployeeSearchInfoList = params => {return axios.get(`${base}/api/v1/car/ownerInfo/`, { params: params }); };
+//车主信息管理接口
+export const getOwnerInfoList = params => {return axios.get(`${base}/api/v1/car/ownerInfo/query/vw`, { params: params }); };
+
+export const addOwnerInfo = params => {return axios.post(`${base}/api/v1/car/ownerInfo/`, params ); };
+
+export const modifyOwnerInfo = params => {return axios.put(`${base}/api/v1/car/ownerInfo/`+params.id,params ); };
+
+export const removeOwnerInfo = params => {return axios.post(`${base}/api/v1/car/ownerInfo/batch`,Qs.stringify(params));};
+//查询车架号
+export const getVehicleSearchInfoList = params => {return axios.get(`${base}/api/v1/car/vehicleInfo/`, { params: params }); };
+/*车主搜索模糊查询接口*/
+export const getSelectListOwner = params => {return axios.get(`${base}/api/v1/car/ownerInfo/query/like`, { params: params }); };
+// 绑定车辆信息
+export const getVehInfoList = params => {return axios.get(`${base}/api/v1/car/vehicleInfo/query/like`, { params: params }); };
+// 详情全部信息
+export const getMoreInfoList = params => {return axios.get(`${base}/api/v1/car/vehicleInfo/query/detail`, { params: params }); };
+/* ----------------------------------------------------------基础管理部分结束------------------------------------------------------*/

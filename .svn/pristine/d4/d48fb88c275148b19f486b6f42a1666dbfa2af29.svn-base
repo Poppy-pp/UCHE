@@ -1,0 +1,5 @@
+.sidebar-menu-con .ivu-icon{
+	width: 14px;
+	height: 18px;
+	line-height: 18px;
+}

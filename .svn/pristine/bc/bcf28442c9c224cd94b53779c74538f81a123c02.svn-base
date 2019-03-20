@@ -1,0 +1,107 @@
+const path = require('path');
+const webpack = require('webpack');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');//抽离css样式,防止将样式打包在js中引起页面样式加载错乱
+
+function resolve (dir) {
+    return path.join(__dirname, dir);
+}
+
+module.exports = {
+    entry: {
+        main: './src/main',
+        vendors: './src/vendors'
+    },
+    devServer: {
+        inline: true,
+        port: 8081,
+        proxy: {
+            '/vasms-uche/': {
+                /*****测试环境******/
+                target:'http://hhbmst.ddns.net:8080',//黄
+                // target:'http://192.168.0.254:8080',//陈
+                // target:'http://101.207.125.98:9111',
+                /*****正式环境******/
+                // target:'http://www.wwuche.com',
+                secure: false
+            },
+            '/img/': {
+                target:'http://101.207.125.98:9111',
+                secure: false
+            },
+            '/vasms-web/': {//表示定义的api前面是target
+                target:'http://192.168.0.254:8080',//VAS
+                secure: false
+            },
+        }
+    },
+    output: {
+        path: path.join(__dirname, '../dist')
+    },
+    module: {
+        rules: [{
+                test: /\.vue$/,
+                loader: 'vue-loader',
+                options: {
+                    loaders: {
+ 
+                        less: ExtractTextPlugin.extract({
+                            use: ['css-loader?minimize', 'autoprefixer-loader', 'less-loader'],//需要什么样的loader去编译文件
+                            fallback: 'vue-style-loader'//编译后用什么loader来提取文件
+                        }),
+
+                        css: ExtractTextPlugin.extract({
+                            use: ['css-loader', 'autoprefixer-loader'],
+                            fallback: 'vue-style-loader'
+                        })
+                    }
+                }
+            },
+            {
+                test: /iview\/.*?js$/,
+                loader: 'babel-loader'
+            },
+            {
+                test: /\.js$/,
+                loader: 'babel-loader',
+                exclude: /node_modules/
+            },
+            {
+                test: /\.css$/,
+                use: ExtractTextPlugin.extract({
+                    use: 'css-loader', 
+                    fallback: 'style-loader'
+                })
+            },
+           
+            {
+                test: /\.less/,
+                use: ExtractTextPlugin.extract({
+                    use: ['autoprefixer-loader', 'less-loader'],
+                    fallback: 'style-loader'
+                })
+            },
+
+            {
+                test: /\.(gif|jpg|png|woff|svg|eot|ttf)\??.*$/,
+                loader: 'url-loader?limit=1024'
+            },
+            {
+                test: /\.(html|tpl)$/,
+                loader: 'html-loader'
+            },
+        ]
+    },
+    resolve: {
+        extensions: ['.js', '.vue'],
+        alias: {
+            'vue': 'vue/dist/vue.esm.js',
+            '@': resolve('../src')
+        }
+    },
+    plugins:[
+        new webpack.ProvidePlugin({
+          $:"jquery",
+          jQuery:"jquery"
+        })
+  ],
+};

@@ -1,0 +1,166 @@
+.login{
+    width: 100%;
+    height: 100%;
+    background-image: url('../images/login_bg.jpg');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    &-con{
+        position: absolute;
+        right: 160px;
+        top: 50%;
+        transform: translateY(-60%);
+        width: 300px;
+        &-header{
+            font-size: 16px;
+            font-weight: 300;
+            text-align: center;
+            padding: 30px 0;
+        }
+        .form-con{
+            padding: 10px 0 0;
+        }
+        .login-tip{
+            font-size: 10px;
+            text-align: center;
+            color: #c3c3c3;
+        }
+    }
+}
+.login_simple_bac{
+  width: 100%;
+  height: 100%;
+  background-size: 100% 100%;
+}
+.wrapper {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 400px;
+  margin-top: -200px;
+  overflow: hidden;
+}
+.container {
+  width: 320px;
+  padding: 22px 0;
+  text-align: center;
+  margin-left:50px;
+  position: relative;
+  left:58%;
+}
+.rememberpsw{
+  width: 250px;
+  margin: 0 auto 15px auto;
+  overflow: hidden;
+}
+.rememberpsw label.remember{
+  float: left;
+  color: #ccc;
+}
+.rememberpsw label.remember span.el-checkbox__inner{
+  background-color: transparent;
+  border-color: #ffffff;
+}
+.rememberpsw a.flowPsw{
+  color: #ccc;
+  float: right;
+}
+.ltitle{
+  background-size: 45px;
+  padding-left: 60px;
+  font-size: 3rem;
+  color: #333333;
+  position: absolute;
+  top: 50%;
+  margin-top:-322px;
+  left:48%;
+  margin-left:45px;
+  font-weight: 200;
+  font-family: 'LiSu';
+}
+.ltitle img{
+  width: 120px;
+  height: 120px;
+  position: relative;
+  top: -20px;
+}
+.ltitle span{
+    display: block;
+    float: right;
+    color: #fff;
+}
+.modal .ivu-steps{
+  margin: 0 0 5% 5%;
+}
+    
+
+
+/*适配登陆页面*/
+@media screen and (min-width: 1480px) and (max-width: 1680px) {
+    .ltitle{
+      margin-left: 45px;
+      font-size: 2.5rem;
+      background-size: 38px;
+      padding-left: 50px;
+      margin-top: -322px;
+    }
+    .container{
+      margin-left: 50px;
+    }
+}
+@media screen and (max-width: 1679px) {
+    .login_simple_bac{
+      background-size: cover;
+    }
+}
+@media screen and (min-width: 1280px) and (max-width: 1480px) {
+    .ltitle{
+      margin-left: 35px;
+      font-size: 2.5rem;
+      background-size: 33px;
+      padding-left: 45px;
+      margin-top: -322px;
+    }
+    .container{
+      margin-left: 50px;
+    }
+}
+@media screen and (max-width: 1280px) {
+    .container {
+      margin: 0 auto;
+      position: initial;
+    }
+    .ltitle{
+      margin-left:-265px;
+      margin-top: -286px;
+      font-size: 2.5rem;
+      padding-left: 45px;
+      background-size: 33px;
+      text-align: center;
+    }
+}
+
+@media screen and (max-width: 720px) {
+    .ltitle{
+      margin-left: -180px;
+      margin-top: -270px;
+      font-size: 2rem;
+      padding-left: 35px;
+      background-size: 25px;
+      text-align: left;
+    }
+    .ltitle img{
+      display: none;
+    }
+}
+@media screen and (max-width: 375px) {
+    .ltitle{
+      margin-left: -122px;
+      margin-top: -258px;
+      font-size: 1.5rem;
+      padding-left: 30px;
+      background-size: 20px;
+      text-align: left;
+    }
+}

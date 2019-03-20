@@ -1,0 +1,513 @@
+<!--* 
+* @description: 预约管理
+* @author: pl 
+* @update: pl (2017-12-18 10:55) 
+*-->
+<template>
+	<section>
+
+        <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+            <el-form :inline="true" :model="filters">
+                <el-form-item>
+                    <Input v-model="filters.search_key" @keyup.enter.native="handleQuery" placeholder="请输入查询内容">
+                    	<Button slot="append" @click="handleQuery" icon="ios-search"></Button>
+                    </Input>
+                </el-form-item>
+                <el-form-item>
+                	<Button type="primary" @click="$router.push({name:'addAppointment'})" icon="plus-round">新增</Button>
+                </el-form-item>
+                <el-form-item>
+                	<Button type="primary" @click="resetForm" icon="loop">重置</Button>
+                </el-form-item>
+                <el-form-item style="float:right;marginRight:0;">
+                    <Dropdown trigger="custom" :visible="selectColVisible" @on-click="handleSelectCols" class="selectcol">
+                        <a href="javascript:void(0)" @click="handleDropdownOpen">
+                            <Button type="primary">自定义列
+                                <Icon type="arrow-down-b"></Icon>
+                            </Button>
+                        </a>
+                        <DropdownMenu slot="list">
+                            <DropdownItem name="reno"><Checkbox v-model="checked.reno"/>预约号</DropdownItem>
+                            <DropdownItem name="custname"><Checkbox v-model="checked.custname"/>客户姓名</DropdownItem>
+                            <DropdownItem name="mobile"><Checkbox v-model="checked.mobile"/>联系方式</DropdownItem>
+                            <DropdownItem name="reservetype"><Checkbox v-model="checked.reservetype"/>预约类型</DropdownItem>
+                            <DropdownItem name="testdrivedate"><Checkbox v-model="checked.testdrivedate"/>预约时间</DropdownItem>
+                            <DropdownItem name="planpurchasedate"><Checkbox v-model="checked.planpurchasedate"/>计划购车时间</DropdownItem>
+                            <DropdownItem name="reservestatus"><Checkbox v-model="checked.reservestatus"/>接待状态</DropdownItem>
+                            <DropdownItem name="remarks"><Checkbox v-model="checked.remarks"/>备注</DropdownItem>
+                            <Button size="small" long type="primary" @click="handleDropdownClose">关闭</Button>
+                        </DropdownMenu>
+                    </Dropdown>
+                </el-form-item>
+            </el-form>
+        </el-col>
+        <!--列表-->
+        <el-table :max-height="windowOutHeight-260" border :data="listData" highlight-current-row v-loading="listLoading" element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading">
+            <el-table-column type="index" label="" width="40" align="center">
+            </el-table-column>
+            <el-table-column prop="reno" label="预约号" align="center" v-if="isarray('reno',curTableData)">
+            </el-table-column>
+            <el-table-column prop="custname" label="客户姓名" align="center" v-if="isarray('custname',curTableData)">
+            </el-table-column>
+            <el-table-column prop="mobile" label="联系方式" align="center" v-if="isarray('mobile',curTableData)">
+            </el-table-column>
+            <el-table-column prop="reservetype" label="预约类型" align="center" v-if="isarray('reservetype',curTableData)">
+            </el-table-column>
+            <el-table-column prop="testdrivedate" label="预约时间" :formatter="dateFormatter" align="center" v-if="isarray('testdrivedate',curTableData)">
+            </el-table-column>
+            <el-table-column prop="planpurchasedate" label="计划购车时间" :formatter="dateFormatterSecond" align="center" v-if="isarray('planpurchasedate',curTableData)">
+            </el-table-column>
+            <el-table-column prop="reservestatus" label="接待状态" width="90"  align="center" v-if="isarray('reservestatus',curTableData)"
+                :filters="[{ text: '未接待', value: '0' }, { text: '已接待', value: '1' },{ text: '已取消', value: '2' }, { text: '已过期', value: '3' }]"
+                :filter-method="filterTag"
+                filter-placement="bottom-end">
+                  <template slot-scope="scope">
+                    <el-tag
+                      :type="scope.row.reservestatus == '1' ? 'success' : scope.row.reservestatus == '0' ? 'info' : scope.row.reservestatus == '2' ? 'primary' : 'danger'"
+                      close-transition>{{scope.row.reservestatus == '0' ? '未接待' : scope.row.reservestatus == '1' ? '已接待' : scope.row.reservestatus == '2' ? '已取消' : scope.row.reservestatus == '3' ? '已过期' : '暂无'}}</el-tag>
+                  </template>
+            </el-table-column>
+            <el-table-column prop="remarks" label="备注"  align="center" v-if="isarray('remarks',curTableData)">
+            </el-table-column>
+            <el-table-column fixed="right" label="操作" align="center" width="100">
+                <template slot-scope="scope">
+                    <!-- <Button type="primary" shape="circle" size="small" @click="handleEdit(scope.$index, scope.row)" title="编辑" :disabled="scope.row.isdelete == '1' ? true : false">
+                        <Icon type="edit"></Icon>
+                    </Button> -->
+                    <Button disabled type="primary" shape="circle" size="small" @click="handleEdit(scope.$index, scope.row)" title="编辑" >
+                        <Icon type="edit"></Icon>
+                    </Button>
+                    <Button disabled type="primary" shape="circle" size="small" @click="handleChange(scope.$index, scope.row)" :title='scope.row.isdelete == "1" ? "设置为有效" : "设置为无效"'>
+                        <Icon type="trash-a"></Icon>
+                    </Button>
+                </template>
+            </el-table-column>
+        </el-table>
+
+        <!--工具条-->
+        <el-pagination
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+                 :page-sizes="[15, 50, 80, 99]"
+                :page-size="pageSize"
+                 layout="total, sizes, prev, pager, next, jumper"
+                :total="total" style="text-align: right;margin-top: 5px;">
+        </el-pagination>
+
+        <!--编辑界面-->
+        <el-dialog title="编辑" :modal-append-to-body="false" :visible.sync="editFormVisible" :close-on-click-modal="false">
+            <el-form :model="editForm" :rules="editFormRules" ref="editForm">
+                <el-collapse v-model="activeNames">
+                    <el-collapse-item title="基本信息" name="1">
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="name" ref="name">
+                                    <el-input v-model="editForm.name" auto-complete="off" readonly>
+                                        <template slot="prepend">预约号</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="" prop="name" ref="name">
+                                    <el-input v-model="editForm.name" auto-complete="off">
+                                        <template slot="prepend">客户姓名</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="" prop="mobile" ref="mobile">
+                                    <el-input v-model="editForm.mobile" auto-complete="off">
+                                        <template slot="prepend">联系方式</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="mobile" ref="mobile">
+                                    <el-input v-model="editForm.mobile" auto-complete="off">
+                                        <template slot="prepend">预约服务</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="预约时间" prop="dateofbirth">
+                                    <el-date-picker
+                                      v-model="editForm.dateofbirth"
+                                      type="date"
+                                      placeholder="选择日期"
+                                      default-value="1990-01-01">
+                                    </el-date-picker>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="occupation">
+                                    <el-input v-model="editForm.occupation" auto-complete="off">
+                                        <template slot="prepend">职业</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="" prop="email">
+                                    <el-input v-model="editForm.email" auto-complete="off">
+                                        <template slot="prepend">邮箱</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="employeename">
+                                    <el-input v-model="editForm.employeename" auto-complete="off" readonly>
+                                        <template slot="prepend">负责人</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="" prop="income">
+                                    <el-input v-model="editForm.income" auto-complete="off">
+                                        <template slot="prepend">年收入</template>
+                                        <template slot="append">元</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                    </el-collapse-item>
+                    <el-collapse-item title="标签信息" name="2">
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="客户等级" prop="custlevel">
+                                    <el-radio-group v-model="editForm.custlevel">
+                                        <el-radio-button label="1">1级</el-radio-button>
+                                        <el-radio-button label="2">2级</el-radio-button>
+                                        <el-radio-button label="3">3级</el-radio-button>
+                                        <el-radio-button label="4">4级</el-radio-button>
+                                    </el-radio-group>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="客户分类" prop="custcategory">
+                                    <el-radio-group  v-model="editForm.custcategory">
+                                        <el-radio-button label="A">A类</el-radio-button>
+                                        <el-radio-button label="B">B类</el-radio-button>
+                                        <el-radio-button label="C">C类</el-radio-button>
+                                        <el-radio-button label="D">D类</el-radio-button>
+                                    </el-radio-group>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="客户状态" prop="">
+                                    <el-radio-group disabled  v-model="editForm.email">
+                                        <el-radio-button label="">潜在</el-radio-button>
+                                        <el-radio-button label="">意向</el-radio-button>
+                                        <el-radio-button label="">洽谈</el-radio-button>
+                                        <el-radio-button label="">成交</el-radio-button>
+                                        <el-radio-button label="">战败</el-radio-button>
+                                    </el-radio-group>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="客户类型" prop="type">
+                                    <el-radio-group  v-model="editForm.type">
+                                        <el-radio-button label="企业">企业</el-radio-button>
+                                        <el-radio-button label="个人">个人</el-radio-button>
+                                        <el-radio-button label="全部">全部</el-radio-button>
+                                    </el-radio-group>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-form-item label="客户来源" prop="">
+                            <el-radio-group disabled  v-model="editForm.email">
+                                <el-radio-button label="">电话营销</el-radio-button>
+                                <el-radio-button label="">自主上门</el-radio-button>
+                                <el-radio-button label="">朋友推荐</el-radio-button>
+                                <el-radio-button label="">网络营销</el-radio-button>
+                                <el-radio-button label="">其他渠道</el-radio-button>
+                            </el-radio-group>
+                        </el-form-item>
+                        <el-form-item label="" prop="">
+                            <el-input  v-model="editForm.email" auto-complete="off">
+                                <template slot="prepend">备注</template>
+                            </el-input>
+                        </el-form-item>
+                    </el-collapse-item>
+                </el-collapse>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <Button @click.native="editFormVisible = false">取消</Button>
+                <Button type="primary" @click.native="editSubmit" :loading="editLoading">提交</Button>
+            </div>
+        </el-dialog>
+        
+    </section>
+</template>
+<script>
+    import util from '../../../styles/js/util'
+    import {getAppointmentList,addAppointment,modifyAppointment} from '../../../api/api';
+    export default {
+        props:['windowOutHeight'],
+        data() {
+            // 验证手机
+              var checkMobile = (rule, value, callback) => {
+                var reg = /^1\d{10}$/g,
+                flag = reg.test(value);
+                if(!flag){
+                  return callback(new Error('请输入11位的手机号码'));
+                }else{
+                  callback();
+                }
+              };
+            return {
+                checked:{//自定义下拉框checkbox
+                  reno:true,
+                  custname:true,
+                  mobile:true,
+                  reservetype:true,
+                  testdrivedate:true,
+                  planpurchasedate:true,
+                  reservestatus:true,
+                  employeename:true,
+                  remarks:true
+                },
+                curTableData:['reno','custname','mobile','reservetype','testdrivedate','planpurchasedate','reservestatus','remarks'],//自定义显示列组
+                selectColVisible:false,//自定义下拉框隐藏
+                fmtdata:util,
+                filters: {
+                    search_key:'',//查询框
+                },
+                activeNames:['1','2','3'],//折叠面板展开
+                user:'',
+                listData: [],
+                total: 0,
+                pageSize:15,
+                currentPage: 1,
+                listLoading: false,
+                sels: [],//列表选中列
+                editFormVisible: false,//编辑界面是否显示
+                editLoading: false,
+                editFormRules: {
+                    mobile:[
+                        {required:true,message:"请输入客户手机号码",trigger: 'blur'},
+                        {validator: checkMobile,trigger: 'blur'}
+                    ],
+                },
+                //编辑界面数据
+                editForm: {
+                    id:'',
+                    name:'',
+                    mobile:'',
+                    gender:'',
+                    dateofbirth:'',
+                    occupation:'',
+                    email:'',
+                    employeename:'',
+                    income:'',
+                    custlevel:'',
+                    custcategory:'',
+                    type:'',
+                },
+            }
+        },
+        methods: {
+            // 自定义显示列
+            isarray(value,array){//判断是否选择
+              for(let i = 0,len = array.length;i<len;i++){
+                if(array[i] == value) return true;
+              }
+              return false;
+            },
+            handleSelectCols(val){//选择列表时
+                  if(!this.checked[val]){//checkbox未选中，要选择时
+                     this.checked[val] = true;//将checkbox选中
+                     if(!this.isarray(val,this.curTableData))//如果不存在，push
+                        this.curTableData.push(val);
+                  }else{//checkbox已选中，取消选择时
+                    this.checked[val] = false;//将checkbox取消选中
+                    if(this.isarray(val,this.curTableData)){//如果存在，删除
+                      this.curTableData.forEach((item,index)=>{
+                        if(item == val){
+                          this.curTableData.splice(index,1);
+                        }
+                      });
+                    }
+                  }
+            },
+            // 下拉菜单
+            handleDropdownOpen () {
+                this.selectColVisible = true;
+            },
+            handleDropdownClose () {
+                this.selectColVisible = false;
+            },
+        	
+
+            
+            
+            // 过滤搜索
+            filterTag(value, row) {
+                return row.reservestatus === value;
+            },
+            // 预约状态转换
+            statusFormatter: function (row, column) {
+                return row.reservestatus == '0' ? '未接待' : row.reservestatus == '1' ? '已接待' : row.reservestatus == '2' ? '已取消' : row.reservestatus == '3' ? '已过期' : '暂无';
+            },
+            //时间转换1
+            dateFormatter: function(row,col){
+                if (row.testdrivedate == "" || row.testdrivedate == undefined)  return;
+                return util.formatDate.format(new Date(row.testdrivedate), 'yyyy-MM-dd');
+            },
+            //时间转换2
+            dateFormatterSecond: function(row,col){
+                if (row.planpurchasedate == "" || row.planpurchasedate == undefined)  return;
+                return util.formatDate.format(new Date(row.planpurchasedate), 'yyyy-MM-dd');
+            },
+            //切换当前页
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.handleQuery();
+            },
+            //切换每页显示数量
+            handleSizeChange(val) {
+                this.pageSize = val;
+                this.handleQuery();
+            },
+            //获取保单列表
+            handleQuery() {
+                let para = {
+                    currentPage : this.currentPage,
+                    showCount   : this.pageSize,
+                    search_key:this.filters.search_key,
+                };
+                this.listLoading = true;
+                getAppointmentList(para).then((res) => {
+                    this.total = res.data.data.totalResult;
+                    this.listData = res.data.data.records;
+                    this.listLoading = false;
+                });
+            },
+            
+            // 关注状态切换
+            handleLikes:function(index,row){
+                    let para = { 
+                        id: row.id,
+                        favourite:row.favourite == 'Y' ? 'N' : 'Y',
+                    }
+                    modifyCustomer(para).then((res) => {
+                        if (res.data.result.code == 0) {
+                            if (res.data.data.favourite == 'Y') {
+                                this.$message ({
+                                    message : '成功添加到我的关注列表！',
+                                    center: true,
+                                    type: 'success'
+                                });
+                            }else if(res.data.data.favourite == 'N'){
+                                this.$message ({
+                                    message : '取关成功！',
+                                    center: true,
+                                    type: 'success'
+                                });
+                            }
+                            this.handleQuery();
+                            row.favourite = para.favourite;
+                        }
+                    });
+            },
+            // 有效按钮切换状态
+            handleChange: function(index,row){
+                this.$confirm('确认设置该条记录的状态吗？', '提示', {
+                    type: 'warning'
+                }).then(() => {
+                    let para = { 
+                        id: row.id,
+                        isdelete:row.isdelete == 0 ? 1 : 0,
+                    }
+                    modifyCustomer(para).then((res) => {
+                        if (res.data.result.code == 0) {
+                            this.$message ({
+                                message : '设置成功',
+                                center: true,
+                                type: 'success'
+                            });
+                            row.isdelete = para.isdelete;
+                            this.handleQuery();
+                        }
+                    }).catch(() => {
+                        this.listLoading = false;
+                    });
+                });
+            },
+            //删除
+            handleDel: function (index, row) {
+                this.$confirm('确认删除该记录吗?', '提示', {
+                    type: 'warning'
+                }).then(() => {
+                    this.listLoading = true;
+                    let para = { 
+                        id: row.id
+                    };
+                    removeUser(para).then((res) => {
+                        this.listLoading = false;
+                        this.$message ({
+                            message : '删除成功',
+                            center: true,
+                            type: 'success'
+                        });
+                        this.handleQuery();
+                    });
+                }).catch(() => {
+
+                });
+            },
+            //显示编辑界面
+            handleEdit: function (index, row) {
+                this.editFormVisible = true;
+                this.editForm = row;
+            },
+            //编辑
+            editSubmit: function () {
+                this.$refs.editForm.validate((valid) => {
+                    if (valid) {
+                        this.editLoading = true;
+                        let para = Object.assign({}, this.editForm);
+                        modifyCustomer(para).then((res) => {
+                            if (res.data.result.code == 0) {
+                                this.editLoading = false;
+                                this.$message ({
+                                    message : '修改成功',
+                                    center: true,
+                                    type: 'success'
+                                });
+                                this.$refs['editForm'].resetFields();
+                                this.editFormVisible = false;
+                                this.handleQuery();
+                            }
+                        });
+                    }else{
+                        this.$message ({
+                                message : '标红项有误！',
+                                center: true,
+                                type: 'error'
+                        });
+                    }
+                });
+            },
+            //清空查询表单
+	resetForm() {
+	        this.filters.search_key = '';
+	},
+            selsChange: function (sels) {
+                this.sels = sels;
+            },
+        },
+        mounted() {
+            this.handleQuery();
+
+            // 得到登陆的用户信息
+            this.user = JSON.parse(sessionStorage.getItem('user'));
+        },
+    }
+</script>

@@ -1,0 +1,548 @@
+<!-- 系统页面框架 -->
+<style lang="less">
+    @import "./main.less";
+    @import "../styles/common.less";
+</style>
+<template>
+    <div class="main" :class="{'main-hide-text': hideMenuText}">
+        <div class="sidebar-menu-con" :style="{width: hideMenuText?'60px':'230px', overflow: hideMenuText ? 'visible' : 'hidden', background: $store.state.menuTheme === 'dark'?'#495060':'white'}">
+            <!-- logo标志 -->
+            <div class="logo-con">
+                <template v-if="userCorp.length == 0"><!-- 当登陆员工端时 -->
+                    <img v-show="!hideMenuText"  src="../images/logo2.png" key="max-logo" />
+                    <img v-show="hideMenuText" src="../images/logo_small.png" key="min-logo" />
+                </template>
+                <template v-else><!-- 当登陆公司端时 -->
+                    <img v-show="!hideMenuText"  src="../images/logo.png" key="max-logo" />
+                    <img v-show="hideMenuText" src="../images/logo_small.png" key="min-logo" />
+                </template>
+            </div>
+            <!-- 导航菜单 -->
+            <sidebar-menu v-if="!hideMenuText" :menuList="menuList" :iconSize="14"/>
+            <sidebar-menu-shrink :icon-color="menuIconColor" v-else :menuList="menuList"/>
+            <!-- 版本脚标 -->
+            <div class="menuFooter">
+                <img src="../images/ww.png">
+                <p :style="{display: hideMenuText?'none':'block'}">UCHE v0.0.1 测试版</p>
+            </div>
+        </div>
+        <!-- 页面顶部工具栏 -->
+        <div class="main-header-con" :style="{paddingLeft: hideMenuText?'60px':'230px'}">
+            <div class="main-header">
+                <!-- 收缩菜单图标 -->
+                <div class="navicon-con">
+                    <Button :style="{transform: 'rotateZ(' + (this.hideMenuText ? '-90' : '0') + 'deg)'}" type="text" @click="toggleClick">
+                        <Icon type="navicon" size="32"></Icon>
+                    </Button>
+                </div>
+                <!-- 面包屑 -->
+                <div class="header-middle-con">
+                    <div class="main-breadcrumb">
+                        <breadcrumb-nav :currentPath="currentPath"></breadcrumb-nav>
+                    </div>
+                </div>
+                <!-- 页面顶部右侧工具栏 -->
+                <div class="header-avator-con">
+                    <!-- 全屏 -->
+                    <div @click="handleFullScreen" v-if="showFullScreenBtn" class="full-screen-btn-con">
+                        <Tooltip :content="isFullScreen ? '退出全屏' : '全屏'" placement="bottom">
+                            <Icon :type="isFullScreen ? 'arrow-shrink' : 'arrow-expand'" :size="23"></Icon>
+                        </Tooltip>
+                    </div>
+                    <!-- 锁屏 -->
+                    <div @click="lockScreen" class="lock-screen-btn-con">
+                        <Tooltip content="锁屏" placement="bottom">
+                            <Icon type="locked" :size="20"></Icon>
+                        </Tooltip>
+                    </div>
+                    <!-- 消息提醒 -->
+                    <div @click="showMessage" class="message-con">
+                        <Tooltip :content="messageCount > 0 ? '有' + messageCount + '条未读消息' : '无未读消息'" placement="bottom">
+                            <Badge :count="messageCount" dot>
+                                <Icon type="ios-bell" :size="22"></Icon>
+                            </Badge>
+                        </Tooltip>
+                    </div>
+                    <!-- 主题设置 -->
+                    <div class="switch-theme-con">
+                        <Row class="switch-theme" type="flex" justify="center" align="middle">
+                            <theme-dropdown-menu></theme-dropdown-menu>
+                        </Row>
+                    </div>
+                    <!-- 登录用户 -->
+                    <div class="user-dropdown-menu-con">
+                        <Row type="flex" justify="end" align="middle" class="user-dropdown-innercon">
+                            <Dropdown @on-click="handleClickUserDropdown">
+                                <a href="javascript:void(0)">
+                                    <span class="main-user-name">{{ userName }}</span>
+                                    <Icon type="arrow-down-b"></Icon>
+                                </a>
+                                <DropdownMenu slot="list">
+                                    <DropdownItem v-show="userCorp.length == 0" name="ownSpace"><i class="iconfont icon-gerenxinxi"></i>&nbsp;个人中心</DropdownItem>
+                                    <DropdownItem @click.native="downedmanal"><i class="iconfont icon-baogao"></i>&nbsp;操作手册</DropdownItem>
+                                    <DropdownItem @click.native="editPsw"><i class="iconfont icon-xiugaimima"></i>&nbsp;修改密码</DropdownItem>
+                                    <DropdownItem name="loginout" divided><i class="iconfont icon-tuichudenglu"></i>&nbsp;退出登录</DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
+                            <!-- 头像 -->
+                            <template v-if="userCorp.length == 0"><!-- 当登陆员工端时 -->
+                                        <template v-if="userEmp.headiconpath == null || userEmp.headiconpath == undefined">
+                                            <img style="width:35px;border-radius:50%;" src="../images/pho.png" :title="userEmp.employeename" />
+                                        </template>
+                                        <template v-else>
+                                            <img style="width:35px;border-radius:50%;" :src="'/img/'+ userEmp.headiconpath" :title="userEmp.employeename" /></img>
+                                        </template>
+                            </template>
+                            <template v-else><!-- 当登陆公司端时 -->
+                                        <template v-if="userCorp.businesslicensepic == null || userCorp.businesslicensepic == undefined">
+                                            <img style="width:35px;border-radius:50%;" src="../images/pho.png" :title="userCorp.corpname" />
+                                        </template>
+                                        <template v-else>
+                                            <img style="width:35px;border-radius:50%;" :src="'/img/'+ userCorp.businesslicensepic" :title="userCorp.corpname" /></img>
+                                        </template>
+                            </template>
+                        </Row>
+                    </div>
+                </div>
+            </div>
+            <!-- 页面标签 -->
+            <div class="tags-con">
+                <tags-page-opened :pageTagsList="pageTagsList"></tags-page-opened>
+            </div>
+        </div>
+        <!-- 内容 -->
+        <div class="single-page-con" :style="{left: hideMenuText?'60px':'230px'}">
+            <div class="single-page">
+                <keep-alive :include="cachePage">
+                    <transition name="el-zoom-in-top" mode="out-in">
+                        <router-view :windowOutHeight="windowOutHeight" ></router-view>
+                    </transition>
+                </keep-alive>
+            </div>
+        </div>
+
+        <!-- 修改用户密码 start-->
+        <Modal
+            v-model="editPswVisible"
+            title="修改密码"
+            @on-ok="editPswSubmit"
+            @on-cancel="editPswVisible = false"
+            loading
+            ok-text="确认修改"
+            width="350"
+            class="pwdForm">
+            <Form :model="pwdForm" :rules="pwdFormrules" ref="pwdForm">
+                    <FormItem label="" prop="pwd">
+                        <Input v-model="pwdForm.pwd" placeholder="请输入原密码">
+                            <span slot="prepend">原密码：</span>
+                        </Input>
+                    </FormItem>
+                    <FormItem label="" prop="new_pwd">
+                        <Input v-model="pwdForm.new_pwd" placeholder="请输入新密码">
+                             <span slot="prepend">新密码：</span>
+                        </Input>
+                    </FormItem>
+                    <FormItem label="" prop="reNew_pwd">
+                        <Input v-model="pwdForm.reNew_pwd" placeholder="请再次输入新密码">
+                            <span slot="prepend">确认密码：</span>
+                        </Input>
+                    </FormItem>
+            </Form>
+        </Modal>
+    </div>
+</template>
+<script>
+    import sidebarMenu from './main_components/sidebarMenu.vue';
+    import tagsPageOpened from './main_components/tagsPageOpened.vue';
+    import breadcrumbNav from './main_components/breadcrumbNav.vue';
+    import themeDropdownMenu from './main_components/themeDropdownMenu.vue';
+    import sidebarMenuShrink from './main_components/sidebarMenuShrink.vue';
+    import Cookies from 'js-cookie';
+    import util from '@/libs/util.js';
+    import $ from '@/libs/jquery-1.10.2.min.js';
+    import axios from 'axios';
+    import { editPassword } from '../api/api';
+    
+    export default {
+        components: {
+            sidebarMenu,
+            tagsPageOpened,
+            breadcrumbNav,
+            themeDropdownMenu,
+            sidebarMenuShrink
+        },
+        data () {
+            return {
+                spanLeft: 4,
+                spanRight: 20,
+                currentPageName: '',
+                hideMenuText: false,
+                userName: '',
+                showFullScreenBtn: window.navigator.userAgent.indexOf('MSIE') < 0,
+                messageCount: 0,
+                windowOutHeight:0,
+                lockScreenSize: 0,
+                user:[],//用户
+                userEmp:[],//员工
+                userCorp:[],//公司
+                userType:'',//用户登录类型
+                editPswVisible:false,//修改密码弹窗
+                pwdForm:{
+                    pwd:'',
+                    new_pwd:'',
+                    reNew_pwd:'',
+                },
+                pwdFormrules:{
+                    pwd:[{required:true,message:"请输入原密码",trigger: 'blur'}],
+                    new_pwd:[{required:true,message:"请输入新密码",trigger: 'blur'}],
+                    reNew_pwd:[{required:true,message:"请再次输入新密码",trigger: 'blur'}]
+                },
+            };
+        },
+        computed: {
+            menuList () {
+                return this.$store.state.menuList;
+            },
+            tagsList () {
+                return this.$store.state.tagsList;  // 所有页面的页面对象
+            },
+            pageTagsList () {
+                return this.$store.state.pageOpenedList;  // 打开的页面的页面对象
+            },
+            currentPath () {
+                return this.$store.state.currentPath;  // 当前面包屑数组
+            },
+            menuIconColor () {
+                return this.$store.state.menuTheme === 'dark' ? 'white' : '#495060';
+            },
+            avatorPath () {
+                return localStorage.avatorImgPath;
+            },
+            cachePage () {
+                return this.$store.state.cachePage;
+            },
+            lang () {
+                return this.$store.state.lang;
+            },
+            isFullScreen () {
+                return this.$store.state.isFullScreen;
+            }
+        },
+        methods: {
+            // 操作文档
+            downedmanal:function(){
+                this.$router.push({name:'error_404'});
+                // window.open('/apk/czsc/UCHE产品操作文档.html', "_blank");
+            },
+            // 修改密码
+            editPsw:function(){
+                this.editPswVisible = true;
+            },
+            editPswSubmit:function(){
+                if(this.pwdForm.new_pwd != this.pwdForm.reNew_pwd){
+                    this.$Message.warning('新密码和确认密码输入的不一致！');
+                    return;
+                }
+                this.$refs.pwdForm.validate((valid) => {
+                      if (valid){
+                            let para = {
+                                id:this.user.id,
+                                pwd:this.pwdForm.pwd,
+                                new_pwd:this.pwdForm.new_pwd,
+                                type:this.userType,
+                            }
+                            this.editPswLoading = true;
+                            editPassword(para).then((res) => {
+                                this.editPswLoading = false;
+                                if(!res.data.data && res.data.result.code == 9999){
+                                    this.$Message.warning(res.data.result.desc);
+                                    return;
+                                }
+                                this.editPswVisible = false;
+                                this.$Message.success('修改密码成功！');
+                                
+                                // 进行退出登录操作，清空页面存储数据
+                                sessionStorage.removeItem('user');
+                                Cookies.remove('user');
+                                Cookies.remove('password');
+                                Cookies.remove('hasGreet');
+                                Cookies.remove('access');
+
+                                this.$router.push({name: 'login'});
+                                this.$refs.pwdForm.resetFields();//初始化表单
+                            });
+                      }else{
+                        return false;
+                      }
+                });
+            },
+            init () {
+                this.$store.commit('setCurrentPageName', this.$route.name);
+                let pathArr = util.setCurrentPath(this, this.$route.name);
+                if (pathArr.length >= 2) {
+                    this.$store.commit('addOpenSubmenu', pathArr[1].name);
+                }
+                this.userName = Cookies.get('user');
+                let messageCount = 3;
+                this.messageCount = messageCount.toString();
+                this.checkTag(this.$route.name);
+
+                // 页面宽度
+                $(window).resize(() =>{
+                    if( $(window).width() < 1280 ) {//小于1280时，隐藏菜单
+                        this.hideMenuText = true;
+                    }else if ($(window).width() > 1280) {//大于1280时，显示菜单
+                        this.hideMenuText = false;
+                    }
+                })
+            },
+            toggleClick () {
+                this.hideMenuText = !this.hideMenuText;
+            },
+
+            // 个人下拉菜单选项
+            handleClickUserDropdown (name) {
+                if (name === 'ownSpace') { // 个人中心
+                    util.openNewPage(this, 'ownspace_index');
+                    this.$router.push({
+                        name: 'ownspace_index'
+                    });
+                } else if (name === 'loginout') { // 退出登录
+                    this.$Modal.confirm({
+                        content: '<p>确认退出登陆吗？</p>',
+                        onOk: () => {
+                            sessionStorage.removeItem('user');//清除
+                            Cookies.remove('user');
+                            Cookies.remove('password');
+                            Cookies.remove('hasGreet');
+                            Cookies.remove('access');
+                            this.$Notice.close('greeting');
+                            this.$store.commit('clearOpenedSubmenu');
+                            // 回复默认样式
+                            let themeLink = document.querySelector('link[name="theme"]');
+                            themeLink.setAttribute('href', '');
+                            // 清空打开的页面等数据，但是保存主题数据
+                            let theme = '';
+                            if (localStorage.theme) {
+                                theme = localStorage.theme;
+                            }
+                            if (theme) {
+                                localStorage.theme = theme;
+                            }
+
+                            //清空本地存储，判断是否记住密码
+                            var remPwd = JSON.parse(localStorage.getItem('rememberUser'));
+                            if (remPwd == null) {//当用户不记住密码时
+                                localStorage.clear();//清空本地存储
+                                this.$router.push({name: 'login'});//跳转登录页
+                            }
+
+                            this.$router.push({name: 'login'});//跳转登录页
+                        },
+                        onCancel: () => {
+                            this.$Message.info('您取消了退出');
+                        }
+                    });
+                }
+            },
+            // 全屏
+            handleFullScreen () {
+                this.$store.commit('handleFullScreen');
+            },
+            // 消息中心
+            showMessage () {
+                util.openNewPage(this, 'message_index');
+                this.$router.push({
+                    name: 'message_index'
+                });
+            },
+            // 锁定
+            lockScreen () {
+                let lockScreenBack = document.getElementById('lock_screen_back');
+                lockScreenBack.style.transition = 'all 3s';
+                lockScreenBack.style.zIndex = 10000;
+                lockScreenBack.style.boxShadow = '0 0 0 ' + this.lockScreenSize + 'px #667aa6 inset';
+                this.showUnlock = true;
+                this.$store.commit('lock');
+                Cookies.set('last_page_name', this.$route.name); // 本地存储锁屏之前打开的页面以便解锁后打开
+                setTimeout(() => {
+                    lockScreenBack.style.transition = 'all 0s';
+                    this.$router.push({
+                        name: 'locking'
+                    });
+                }, 800);
+            },
+            // 标签页
+            checkTag (name) {
+                let openpageHasTag = this.pageTagsList.some(item => {
+                    if (item.name === name) {
+                        return true;
+                    }
+                });
+                if (!openpageHasTag) {  //  解决关闭当前标签后再点击回退按钮会退到当前页时没有标签的问题
+                    util.openNewPage(this, name, this.$route.params || {}, this.$route.query || {});
+                }
+            }
+        },
+        watch: {
+            '$route' (to) {
+                this.$store.commit('setCurrentPageName', to.name);
+                let pathArr = util.setCurrentPath(this, to.name);
+                if (pathArr.length > 2) {
+                    this.$store.commit('addOpenSubmenu', pathArr[1].name);
+                }
+                this.checkTag(to.name);
+            },
+            lang () {
+                util.setCurrentPath(this, this.$route.name);  // 在切换语言时用于刷新面包屑
+            }
+        },
+        mounted () {
+            // 得到登陆的用户信息
+            this.user = JSON.parse(sessionStorage.getItem('user'));
+            if (this.user == null && Cookies.get('user')) {//sessionStorage未登陆但cookies有信息时，到登录页，解决浏览器多窗口登陆
+                this.$router.push({name:'login'});
+            }else{
+                if (this.user.employeeInfo == null) {
+                    this.userCorp = this.user.corporateInfo;//存储公司信息
+                    this.userType = 'C';//存储公司类型
+                }else if (this.user.corporateInfo == null) {}{
+                    this.userEmp = this.user.employeeInfo;//存储员工信息
+                    this.userType = 'R';//存储员工信息
+                }
+            }
+
+            this.init();
+
+
+            // 锁屏相关
+            let lockScreenBack = document.getElementById('lock_screen_back');
+            let x = document.body.clientWidth;
+            let y = document.body.clientHeight;
+            let r = Math.sqrt(x * x + y * y);
+            let size = parseInt(r);
+            this.lockScreenSize = size;
+            window.addEventListener('resize', () => {
+                let x = document.body.clientWidth;
+                let y = document.body.clientHeight;
+                let r = Math.sqrt(x * x + y * y);
+                let size = parseInt(r);
+                this.lockScreenSize = size;
+                lockScreenBack.style.transition = 'all 0s';
+                lockScreenBack.style.width = lockScreenBack.style.height = size + 'px';
+            });
+            lockScreenBack.style.width = lockScreenBack.style.height = size + 'px';
+
+            // 问候信息相关
+            if (!Cookies.get('hasGreet')) {
+                let now = new Date();
+                let hour = now.getHours();
+                let greetingWord = {
+                    title: '',
+                    words: ''
+                };
+                let userName = Cookies.get('user');
+                if (hour > 5 && hour < 6) {
+                    greetingWord = {title: '凌晨好~' + userName, words: '早起的鸟儿有虫吃~'};
+                } else if (hour >= 6 && hour < 9) {
+                    greetingWord = {title: '早上好~' + userName, words: '来一杯咖啡开启美好的一天~'};
+                } else if (hour >= 9 && hour < 12) {
+                    greetingWord = {title: '上午好~' + userName, words: '工作要加油哦~'};
+                } else if (hour >= 12 && hour < 14) {
+                    greetingWord = {title: '中午好~' + userName, words: '午饭要吃饱~'};
+                } else if (hour >= 14 && hour < 17) {
+                    greetingWord = {title: '下午好~' + userName, words: '下午也要活力满满哦~'};
+                } else if (hour >= 17 && hour < 19) {
+                    greetingWord = {title: '傍晚好~' + userName, words: '下班没事问候下爸妈吧~'};
+                } else if (hour >= 19 && hour < 21) {
+                    greetingWord = {title: '晚上好~' + userName, words: '工作之余品一品书香吧~'};
+                } else {
+                    greetingWord = {title: '深夜好~' + userName, words: '夜深了，注意休息哦~'};
+                }
+                this.$Notice.config({
+                    top: 130
+                });
+                this.$Notice.info({
+                    title: greetingWord.title,
+                    desc: greetingWord.words,
+                    duration: 4,
+                    name: 'greeting'
+                });
+                Cookies.set('hasGreet', 1);
+            }
+        },
+        created () {
+            // 查找当前用户之前登录时设置的主题
+            let name = Cookies.get('user');
+            if (localStorage.theme) {
+                let hasThisUser = JSON.parse(localStorage.theme).some(item => {
+                    if (item.userName === name) {
+                        this.$store.commit('changeMenuTheme', item.menuTheme);
+                        this.$store.commit('changeMainTheme', item.mainTheme);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+                if (!hasThisUser) {
+                    this.$store.commit('changeMenuTheme', 'dark');
+                    this.$store.commit('changeMainTheme', 'b');
+                }
+            } else {
+                this.$store.commit('changeMenuTheme', 'dark');
+                this.$store.commit('changeMainTheme', 'b');
+            }
+            // 根据用户设置主题
+            if (this.$store.state.theme !== 'b') {
+                let stylesheetPath = './dist/' + this.$store.state.theme + '.css';
+                let themeLink = document.querySelector('link[name="theme"]');
+                themeLink.setAttribute('href', stylesheetPath);
+            }
+            // 显示打开的页面的列表
+            this.$store.commit('setOpenedList');
+
+            /* 记录用户token*/
+            let user = JSON.parse(sessionStorage.getItem('user'));
+            axios.defaults.headers.common['token'] = user == null ? '' : user.token;
+            axios.defaults.headers.common['OS'] = 'VAS';
+            axios.defaults.timeout = 15000;
+            /*添加请求拦截器*/
+            axios.interceptors.request.use((config)=>{
+                 /*在发送请求之前做某事*/
+                return config;
+            },(error)=>{
+                this.$Message.error('请求失败!');
+                /*请求错误时做些事*/
+                return Promise.reject(error);
+            });
+            /*添加响应拦截器 如果token丢失提示用户重新登陆*/
+            axios.interceptors.response.use((response)=>{
+                if(response.data.result.code != 0){
+                    this.$Message.error(response.data.result.desc);
+                }
+                if(response.data.result){
+                      if(response.data.result.code == 9001 && !response.data.data){
+                            this.$confirm(response.data.result.desc, '错误', {
+                              confirmButtonText: '重新登陆',
+                              cancelButtonText: '取消',
+                              type: 'error'
+                            }).then(() => {
+                                sessionStorage.removeItem('user');
+                                this.$router.push({name:'login'});
+                            }).catch(() => {
+                            });
+                        }
+                }
+                return response;
+              },(error)=>{
+                this.$Message.error('请求失败!' + error);
+                return Promise.reject(error);
+            });
+
+
+            //获取窗口高度
+            this.windowOutHeight = $(window).height();
+        }
+    };
+</script>
+

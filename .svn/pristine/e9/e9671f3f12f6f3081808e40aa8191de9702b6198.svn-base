@@ -1,0 +1,111 @@
+<template>
+    <el-form :model="addForm" :rules="addFormRules" ref="addForm">
+            <el-collapse v-model="activeNames">
+                    <el-collapse-item title="关联车辆信息" name="1">
+                        <el-row :gutter="50">
+                            <el-col :span="6">
+                                <el-form-item label="" prop="name" ref="name">
+                                    <el-input  v-model="addForm.name" auto-complete="off">
+                                        <template slot="prepend">车主手机</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="5">
+                                <el-form-item label="" prop="mobile" ref="mobile">
+                                    <el-input  v-model="addForm.mobile" auto-complete="off">
+                                        <template slot="prepend">车主</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="13">
+                                <el-form-item label="" prop="mobile" ref="mobile">
+                                    <el-input  v-model="addForm.mobile" auto-complete="off">
+                                        <template slot="prepend">车牌号/车架号</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                    </el-collapse-item>
+                    <el-collapse-item title="关联人信息" name="2">
+                        <el-row :gutter="50">
+                            <el-col :span="8">
+                                <el-form-item label="" prop="mobile" ref="mobile">
+                                    <el-input  v-model="addForm.mobile" auto-complete="off">
+                                        <template slot="prepend">关联人手机</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="8">
+                                <el-form-item label="" prop="mobile" ref="mobile">
+                                    <el-input  v-model="addForm.mobile" auto-complete="off">
+                                        <template slot="prepend">关联人</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="8">
+                                <el-form-item label="" prop="mobile" ref="mobile">
+                                    <el-input  v-model="addForm.mobile" auto-complete="off">
+                                        <template slot="prepend">关联关系</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <Button type="primary" @click="" style="float:right" icon="ios-plus-outline">添加其他关联人</Button>
+                        </el-row>
+                    </el-collapse-item>
+            </el-collapse>
+            <div class="footer">
+                <Button type="primary" @click.native="addSubmit" :loading="addLoading" icon="checkmark-circled">确认关联</Button>
+                <Button @click="goback">返回</Button>
+            </div>
+        </el-form>
+
+</template>
+
+<script>
+    export default {
+        data () {
+            return {
+                activeNames: ['1','2'],
+                //新增界面数据
+                addForm: {
+                    name:'',
+                    mobile:'',
+                    gender:'',
+                    dateofbirth:'',
+                    occupation:'',
+                    email:'',
+                    employeename:'',
+                    income:'',
+                    custlevel:'',
+                    custcategory:'',
+                    type:'',
+                },
+                addLoading: false,
+                addFormRules: {
+                    mobile:[
+                        {required:true,message:"请输入客户手机号码",trigger: 'blur'},
+                        {validator: checkMobile,trigger: 'blur'}
+                    ],
+                },
+            }
+
+            // 验证手机
+              var checkMobile = (rule, value, callback) => {
+                var reg = /^1\d{10}$/g,
+                flag = reg.test(value);
+                if(!flag){
+                  return callback(new Error('请输入11位的手机号码'));
+                }else{
+                  callback();
+                }
+              };
+        },
+        methods: {
+            goback:function(){
+                this.$router.go(-1);
+            },
+        }
+    }
+</script>

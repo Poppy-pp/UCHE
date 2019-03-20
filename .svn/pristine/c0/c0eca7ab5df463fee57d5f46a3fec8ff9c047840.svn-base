@@ -1,0 +1,411 @@
+<template>
+  <el-tabs v-model="activeName" @tab-click="handleTabsClick" :tab-position="tabPosition" class="leftTabs">
+    <!-- tab1 试驾预约 -->
+    <el-tab-pane name="first">
+      <span slot="label"><i class="el-icon-location-outline"></i> 试驾预约</span>
+      <el-card class="box-card">
+        <div slot="header">
+          <h2>试驾预约登记</h2>
+        </div>
+        <el-form :model=" addForm" :rules="addFormRules" ref=" addForm">
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="custname">
+                                    <el-input v-model="addForm.custname" auto-complete="off">
+                                        <template slot="prepend">姓名</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="mobile">
+                                    <el-input v-model="addForm.mobile" auto-complete="off">
+                                        <template slot="prepend">联系方式</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="reservetype">
+                                    <el-input v-model="addForm.reservetype" auto-complete="off" readonly>
+                                        <template slot="prepend">预约类型</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="20">
+                                <el-form-item label="选择车辆" prop="">
+                                    <el-select v-model="addForm.favbrand" filterable  clearable placeholder="请选择品牌">
+                                        <el-option
+                                          v-for="item in brandOptions"
+                                          :key="item.label"
+                                          :label="item.value"
+                                          :value="item.label">
+                                        </el-option>
+                                    </el-select>
+                                    <el-select v-model="addForm.favseries" filterable  clearable placeholder="请选择车系">
+                                        <el-option
+                                          v-for="item in seriesOptions"
+                                          :key="item.label"
+                                          :label="item.value"
+                                          :value="item.label">
+                                        </el-option>
+                                    </el-select>
+                                    <el-select v-model="addForm.favmodel" filterable  clearable placeholder="请选择车型">
+                                        <el-option
+                                          v-for="item in modelOptions"
+                                          :key="item.label"
+                                          :label="item.value"
+                                          :value="item.label">
+                                        </el-option>
+                                    </el-select>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="试驾时间" prop="testdrivedate">
+                                    <el-date-picker
+                                      v-model="addForm.testdrivedate"
+                                      type="datetime"
+                                      placeholder="选择试驾时间">
+                                    </el-date-picker>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="购车时间" prop="planpurchasedate">
+                                    <el-date-picker
+                                      v-model="addForm.planpurchasedate"
+                                      type="datetime"
+                                      placeholder="选择购车时间">
+                                    </el-date-picker>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="备注" prop="remarks">
+                                    <el-input v-model="addForm.remarks" auto-complete="off" type="textarea"></el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                  </el-form>
+                  <Button type="primary" @click.native="addSubmit" :loading="addLoading" icon="ios-plus-outline">添加试驾预约</Button>
+      </el-card>
+    </el-tab-pane>
+
+    <!-- tab2 购车预约 -->
+    <el-tab-pane name="second">
+      <span slot="label"><i class="el-icon-sold-out"></i> 购车预约</span>
+      <el-card class="box-card">
+        <div slot="header">
+          <h2>购车预约登记</h2>
+        </div>
+        <el-form :model="addForm" :rules="addFormRules" ref="addForm">
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="custname">
+                                    <el-input v-model="addForm.custname" auto-complete="off">
+                                        <template slot="prepend">姓名</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="mobile">
+                                    <el-input v-model="addForm.mobile" auto-complete="off">
+                                        <template slot="prepend">联系方式</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="reservetype">
+                                    <el-input v-model="addForm.reservetype" auto-complete="off" readonly>
+                                        <template slot="prepend">预约类型</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="20">
+                                <el-form-item label="选择车辆" prop="">
+                                    <el-select v-model="addForm.favbrand" filterable  clearable placeholder="请选择品牌">
+                                        <el-option
+                                          v-for="item in brandOptions"
+                                          :key="item.label"
+                                          :label="item.value"
+                                          :value="item.label">
+                                        </el-option>
+                                    </el-select>
+                                    <el-select v-model="addForm.favseries" filterable  clearable placeholder="请选择车系">
+                                        <el-option
+                                          v-for="item in seriesOptions"
+                                          :key="item.label"
+                                          :label="item.value"
+                                          :value="item.label">
+                                        </el-option>
+                                    </el-select>
+                                    <el-select v-model="addForm.favmodel" filterable  clearable placeholder="请选择车型">
+                                        <el-option
+                                          v-for="item in modelOptions"
+                                          :key="item.label"
+                                          :label="item.value"
+                                          :value="item.label">
+                                        </el-option>
+                                    </el-select>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="购车时间" prop="testdrivedate">
+                                    <el-date-picker
+                                      v-model="addForm.testdrivedate"
+                                      type="datetime"
+                                      placeholder="选择购车时间">
+                                    </el-date-picker>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="备注" prop="remarks">
+                                    <el-input v-model="addForm.remarks" auto-complete="off" type="textarea"></el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                  </el-form>
+                  <Button type="primary" @click.native="addSubmit" :loading="addLoading" icon="ios-plus-outline">添加购车预约</Button>
+      </el-card>
+    </el-tab-pane>
+
+    <!-- tab3 售后预约 -->
+    <el-tab-pane name="third">
+      <span slot="label"><i class="el-icon-service"></i> 售后预约</span>
+      <el-card class="box-card">
+        <div slot="header">
+          <h2>售后预约登记</h2>
+        </div>
+        <el-form :model="addForm" :rules="addFormRules" ref="addForm">
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="custname" ref="name">
+                                    <el-input v-model="addForm.custname" auto-complete="off">
+                                        <template slot="prepend">姓名</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="mobile" ref="mobile">
+                                    <el-input v-model="addForm.mobile" auto-complete="off">
+                                        <template slot="prepend">联系方式</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="reservetype">
+                                    <el-input v-model="addForm.reservetype" auto-complete="off" readonly>
+                                        <template slot="prepend">预约类型</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="24" class="stepState">
+                                <el-form-item label="预约项目" prop="aftersaleitem">
+                                      <el-radio v-model="addForm.aftersaleitem" label="保养" border>保养</el-radio>
+                                      <el-radio v-model="addForm.aftersaleitem" label="维修" border>维修</el-radio>
+                                      <el-radio v-model="addForm.aftersaleitem" label="美容" border>美容</el-radio>
+                                      <el-radio v-model="addForm.aftersaleitem" label="改装" border>改装</el-radio>
+                                      <el-radio v-model="addForm.aftersaleitem" label="洗车" border>洗车</el-radio>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="20">
+                                <el-form-item label="选择车辆" prop="">
+                                    <el-select v-model="addForm.favbrand" filterable  clearable placeholder="请选择品牌">
+                                        <el-option
+                                          v-for="item in brandOptions"
+                                          :key="item.label"
+                                          :label="item.value"
+                                          :value="item.label">
+                                        </el-option>
+                                    </el-select>
+                                    <el-select v-model="addForm.favseries" filterable  clearable placeholder="请选择车系">
+                                        <el-option
+                                          v-for="item in seriesOptions"
+                                          :key="item.label"
+                                          :label="item.value"
+                                          :value="item.label">
+                                        </el-option>
+                                    </el-select>
+                                    <el-select v-model="addForm.favmodel" filterable  clearable placeholder="请选择车型">
+                                        <el-option
+                                          v-for="item in modelOptions"
+                                          :key="item.label"
+                                          :label="item.value"
+                                          :value="item.label">
+                                        </el-option>
+                                    </el-select>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="licenseplatenum">
+                                    <el-input v-model="addForm.licenseplatenum" auto-complete="off">
+                                        <template slot="prepend">车牌号码</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="totalmiles">
+                                    <el-input v-model="addForm.totalmiles" auto-complete="off">
+                                        <template slot="prepend">行驶里程</template>
+                                        <template slot="append">公里</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="" prop="servicemonths">
+                                    <el-input v-model="addForm.servicemonths" auto-complete="off">
+                                        <template slot="prepend">上路时间</template>
+                                        <template slot="append">小时</template>
+                                    </el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="到店时间" prop="testdrivedate">
+                                    <el-date-picker
+                                      v-model="addForm.testdrivedate"
+                                      type="datetime"
+                                      placeholder="选择到店时间">
+                                    </el-date-picker>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row :gutter="80">
+                            <el-col :span="12">
+                                <el-form-item label="备注" prop="remarks">
+                                    <el-input v-model="addForm.remarks" auto-complete="off" type="textarea"></el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                  </el-form>
+                  <Button type="primary" @click.native="addSubmit" :loading="addLoading" icon="ios-plus-outline">添加售后预约</Button>
+      </el-card>
+    </el-tab-pane>
+  </el-tabs>
+</template>
+<script>
+import util from '../../../styles/js/util'
+import {addAppointment} from '../../../api/api';
+export default {
+    props:['windowOutHeight'],
+    data() {
+      return {
+        activeName: 'first',
+        tabPosition: 'left',
+        addFormRules:{//试驾
+
+        },
+        addForm:{
+            custname:'',
+            mobile:'',
+            reservetype:'试驾预约',
+            favbrand:'',
+            favseries:'',
+            favmodel:'',
+            testdrivedate:'',
+            planpurchasedate:'',
+            remarks:'',
+            aftersaleitem:'',
+            licenseplatenum:'',
+            totalmiles:'',
+            servicemonths:'',
+        },
+        addLoading:false,
+        brandOptions: [{
+          value: '宝马4系',
+          label: '宝马4系'
+        }],
+        seriesOptions:[{
+            label:'2015款',
+            value:'2015款',
+        }],
+        modelOptions:[{
+            label:'敞篷豪华款',
+            value:'敞篷豪华款',
+        }],
+      };
+    },
+    methods: {
+      handleTabsClick(tab, event) {
+        if (tab.index == '1') {
+            this.addForm.reservetype = '购车预约';
+        }else if (tab.index == '2') {
+            this.addForm.reservetype = '售后预约';
+        }else if (tab.index == '0') {
+            this.addForm.reservetype = '试驾预约';
+        }
+      },
+      addSubmit: function () {
+                this.$refs.addForm.validate((valid) => {
+                    if (valid) {
+                                this.addLoading = true;
+                                let para = {
+                                    custname:this.addForm.custname,
+                                    mobile:this.addForm.mobile,
+                                    reservetype:this.addForm.reservetype,
+                                    favbrand:this.addForm.favbrand,
+                                    favseries:this.addForm.favseries,
+                                    favmodel:this.addForm.favmodel,
+                                    testdrivedate:this.addForm.testdrivedate,
+                                    planpurchasedate:this.addForm.planpurchasedate,
+                                    remarks:this.addForm.remarks,
+                                }
+                                addAppointment(para).then((res) => {
+                                    if (res.data.result.code == 0) {
+                                        this.addLoading = false;
+                                        this.$message ({
+                                            message : '预约成功！',
+                                            center: true,
+                                            type: 'success'
+                                        });
+                                        this.$refs['addForm'].resetFields();
+                                        this.$router.push({
+                                              name: 'appointmentList'
+                                        });
+                                    }
+                                });
+                    }else{
+                        this.$message ({
+                                message : '标红项有误！',
+                                center: true,
+                                type: 'error'
+                        });
+                    }
+                });
+            },
+    }
+  };
+</script>
